@@ -796,6 +796,72 @@ void main() {
     });
   });
 
+  group('auto-stop on idle', () {
+    Future<void> startAutoSession({int minKeepSeconds = 0}) async {
+      await store.write(AutoRecordSettings(
+        enabled: true,
+        silenceSeconds: 0,
+        autoStopOnIdle: true,
+        minKeepSeconds: minKeepSeconds,
+        allowlist: const [
+          AllowlistEntry(
+            key: 'Teams.exe',
+            displayName: 'Teams',
+            kind: AllowlistKind.exeBasename,
+          ),
+        ],
+      ));
+      mic.emit([
+        _u(key: 'Teams.exe', kind: AllowlistKind.exeBasename, inUse: true),
+      ]);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(coord.isAutoSession, isTrue);
+    }
+
+    Future<void> goIdle() async {
+      mic.emit([
+        _u(key: 'Teams.exe', kind: AllowlistKind.exeBasename, inUse: false),
+      ]);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      meter.ctrl.add(0.0);
+      meter.ctrl.add(0.0);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+
+    test('stops and saves without prompting when both go idle', () async {
+      await startAutoSession();
+      final emitted = <StopPromptRequest>[];
+      final sub = coord.prompts.listen(emitted.add);
+
+      await goIdle();
+
+      expect(emitted, isEmpty);
+      expect(rec.stoppedCalled, isTrue);
+      expect(rec.cancelCalled, isFalse);
+      expect(coord.isAutoSession, isFalse);
+      await sub.cancel();
+    });
+
+    test('still discards clips shorter than minKeepSeconds', () async {
+      await startAutoSession(minKeepSeconds: 10);
+      rec.setState(const RecordingState(started: true, elapsedSeconds: 3));
+
+      await goIdle();
+
+      expect(rec.cancelCalled, isTrue);
+      expect(rec.stoppedCalled, isFalse);
+    });
+
+    test('does not stop while the trigger app still holds the mic', () async {
+      await startAutoSession();
+      meter.ctrl.add(0.0);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(rec.stoppedCalled, isFalse);
+      expect(coord.isAutoSession, isTrue);
+    });
+  });
+
   test('does not apply metadata if startRecording fails to start', () async {
     // Replace the setUp coordinator with one wired to a failing controller —
     // start() leaves `started: false`. Disposing the original first

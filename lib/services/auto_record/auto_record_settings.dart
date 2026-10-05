@@ -211,6 +211,7 @@ class AutoRecordSettings {
     this.allowlist = const [],
     this.recentlySeen = const [],
     this.silenceSeconds = 5,
+    this.autoStopOnIdle = false,
     this.minKeepSeconds = 10,
     this.defaultSpeakers = 2,
     this.defaultTagIds = const [],
@@ -228,6 +229,10 @@ class AutoRecordSettings {
   /// system audio output have *both* been idle, simultaneously, for at
   /// least this many seconds.
   final int silenceSeconds;
+
+  /// When true, an idle window of [silenceSeconds] stops and saves the
+  /// session directly instead of asking. [minKeepSeconds] still applies.
+  final bool autoStopOnIdle;
 
   /// Auto-recorded sessions shorter than this are discarded silently
   /// (no library entry).
@@ -254,6 +259,7 @@ class AutoRecordSettings {
     List<AllowlistEntry>? allowlist,
     List<RecentlySeenEntry>? recentlySeen,
     int? silenceSeconds,
+    bool? autoStopOnIdle,
     int? minKeepSeconds,
     int? defaultSpeakers,
     List<int>? defaultTagIds,
@@ -267,6 +273,7 @@ class AutoRecordSettings {
       allowlist: allowlist ?? this.allowlist,
       recentlySeen: recentlySeen ?? this.recentlySeen,
       silenceSeconds: silenceSeconds ?? this.silenceSeconds,
+      autoStopOnIdle: autoStopOnIdle ?? this.autoStopOnIdle,
       minKeepSeconds: minKeepSeconds ?? this.minKeepSeconds,
       defaultSpeakers: defaultSpeakers ?? this.defaultSpeakers,
       defaultTagIds: defaultTagIds ?? this.defaultTagIds,
@@ -284,6 +291,7 @@ class AutoRecordSettings {
         'allowlist': allowlist.map((e) => e.toJson()).toList(),
         'recentlySeen': recentlySeen.map((e) => e.toJson()).toList(),
         'silenceSeconds': silenceSeconds,
+        'autoStopOnIdle': autoStopOnIdle,
         'minKeepSeconds': minKeepSeconds,
         'defaultSpeakers': defaultSpeakers,
         'defaultTagIds': defaultTagIds,
@@ -307,6 +315,7 @@ class AutoRecordSettings {
           .map(RecentlySeenEntry.fromJson)
           .toList(growable: false),
       silenceSeconds: (json['silenceSeconds'] as num?)?.toInt() ?? 5,
+      autoStopOnIdle: json['autoStopOnIdle'] as bool? ?? false,
       minKeepSeconds: (json['minKeepSeconds'] as num?)?.toInt() ?? 10,
       defaultSpeakers: (json['defaultSpeakers'] as num?)?.toInt() ?? 2,
       defaultTagIds: (json['defaultTagIds'] as List? ?? const [])

@@ -84,7 +84,7 @@ class _AutoRecordSettingsScreenState
                         'recording. Recording continues until both the '
                         'app has released the mic and the audio output '
                         'has been idle for ${s.silenceSeconds} seconds — '
-                        'then Minutes asks whether to stop.',
+                        '${s.autoStopOnIdle ? 'then Minutes stops and saves it.' : 'then Minutes asks whether to stop.'}',
                         style: SpeakrText.sans(
                           size: 13,
                           color: SpeakrColors.ink2,
@@ -463,7 +463,16 @@ class _BehaviorGroup extends ConsumerWidget {
       label: 'Behavior',
       children: [
         SettingsRow(
-          label: 'Stop-prompt idle threshold',
+          label: 'Stop automatically when idle',
+          subtitle: 'Stop and save without asking once the idle '
+              'threshold is reached.',
+          toggleValue: settings.autoStopOnIdle,
+          onToggle: controller.setAutoStopOnIdle,
+        ),
+        SettingsRow(
+          label: settings.autoStopOnIdle
+              ? 'Auto-stop idle threshold'
+              : 'Stop-prompt idle threshold',
           trailing: _IntStepper(
             value: settings.silenceSeconds,
             suffix: 's',
