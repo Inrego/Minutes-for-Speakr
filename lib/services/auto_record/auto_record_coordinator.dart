@@ -146,6 +146,10 @@ class AutoRecordCoordinator {
   bool _waitingForReactivation = false;
   bool _promptOpen = false;
 
+  /// True while an [AutoRecordSettings.autoStopOnIdle] stop is in flight,
+  /// so peaks arriving before the session ends don't stop it twice.
+  bool _autoStopping = false;
+
   final _prompts = StreamController<StopPromptRequest>.broadcast();
   Stream<StopPromptRequest> get prompts => _prompts.stream;
 
@@ -285,6 +289,7 @@ class AutoRecordCoordinator {
       _micReleasedSinceUtc = null;
       _waitingForReactivation = false;
       _promptOpen = false;
+      _autoStopping = false;
     }
   }
 
@@ -306,7 +311,7 @@ class AutoRecordCoordinator {
   }
 
   void _maybeFireStopPrompt(AutoRecordSettings settings, DateTime now) {
-    if (_promptOpen) return;
+    if (_promptOpen || _autoStopping) return;
     if (!_autoSession) return;
     if (_waitingForReactivation) return;
 
@@ -321,6 +326,13 @@ class AutoRecordCoordinator {
         silentSince.isAfter(releasedSince) ? silentSince : releasedSince;
     final inactiveFor = now.difference(bothInactiveSince);
     if (inactiveFor < Duration(seconds: settings.silenceSeconds)) return;
+
+    if (settings.autoStopOnIdle) {
+      debugPrint('[auto-record] idle — auto-stopping without prompt');
+      _autoStopping = true;
+      unawaited(stopAutoSession());
+      return;
+    }
 
     _prompts.add(StopPromptRequest(
       triggerLabel: _activeTriggerLabel ?? 'recording',
