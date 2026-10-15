@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20Windows-informational.svg)](#requirements)
 [![Latest release](https://img.shields.io/github/v/release/Inrego/SpeakrApp?sort=semver)](https://github.com/Inrego/SpeakrApp/releases/latest)
+[![Google Play](https://img.shields.io/badge/Google%20Play-Minutes%20for%20Speakr-414141?logo=googleplay)](https://play.google.com/store/apps/details?id=com.inrego.speakr_app)
 
 An unofficial Flutter client for [Speakr](https://github.com/learnedmachine/speakr), the self-hosted audio transcription and meeting-notes server. Runs on **Android**, **iOS**, and **Windows desktop**.
 
@@ -42,8 +43,10 @@ Prebuilt artifacts for tagged versions are published on the [GitHub Releases](ht
 
 ### Android
 
-- **Direct download:** grab the universal `.apk` from the latest [release](https://github.com/Inrego/SpeakrApp/releases/latest) and install it (enable "install from unknown sources" if your device prompts you).
-- **Google Play:** the signed app bundle (`.aab`) is built for the Play track; once published it can be installed from the Play Store listing.
+- **Direct download (free):** grab the universal `.apk` from the latest [release](https://github.com/Inrego/SpeakrApp/releases/latest) and install it (enable "install from unknown sources" if your device prompts you).
+- **Google Play:** [Minutes for Speakr on Google Play](https://play.google.com/store/apps/details?id=com.inrego.speakr_app).
+
+The app is and will remain free on GitHub — every release ships the same APK here. If you'd like to support development, getting it through Google Play is a nice way to do so, and you get automatic updates in return.
 
 ### Windows
 
