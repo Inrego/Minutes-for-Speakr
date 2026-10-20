@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../api/models.dart';
+import '../../services/auto_record/auto_record_coordinator.dart'
+    show kAutoStopCountdownSeconds;
 import '../../services/auto_record/auto_record_providers.dart';
 import '../../services/auto_record/auto_record_settings.dart';
 import '../../theme/colors.dart';
@@ -84,7 +86,9 @@ class _AutoRecordSettingsScreenState
                         'recording. Recording continues until both the '
                         'app has released the mic and the audio output '
                         'has been idle for ${s.silenceSeconds} seconds — '
-                        '${s.autoStopOnIdle ? 'then Minutes stops and saves it.' : 'then Minutes asks whether to stop.'}',
+                        'then the recording pill counts down '
+                        '$kAutoStopCountdownSeconds seconds before '
+                        'stopping, unless you click Resume.',
                         style: SpeakrText.sans(
                           size: 13,
                           color: SpeakrColors.ink2,
@@ -463,16 +467,7 @@ class _BehaviorGroup extends ConsumerWidget {
       label: 'Behavior',
       children: [
         SettingsRow(
-          label: 'Stop automatically when idle',
-          subtitle: 'Stop and save without asking once the idle '
-              'threshold is reached.',
-          toggleValue: settings.autoStopOnIdle,
-          onToggle: controller.setAutoStopOnIdle,
-        ),
-        SettingsRow(
-          label: settings.autoStopOnIdle
-              ? 'Auto-stop idle threshold'
-              : 'Stop-prompt idle threshold',
+          label: 'Auto-stop idle threshold',
           trailing: _IntStepper(
             value: settings.silenceSeconds,
             suffix: 's',

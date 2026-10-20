@@ -58,6 +58,11 @@ class RecordingController extends StateNotifier<RecordingState> {
   StreamSubscription<double>? _audioLevelSub;
   DateTime _audioLevelLastPush = DateTime.fromMillisecondsSinceEpoch(0);
 
+  /// Invoked when the user clicks "Resume" on the pill's idle
+  /// stop-countdown. Wired by the auto-record bootstrap to the
+  /// coordinator, which owns the countdown.
+  VoidCallback? onResumeAutoStop;
+
   final _navController = StreamController<RecordingNav>.broadcast();
   Stream<RecordingNav> get navStream => _navController.stream;
 
@@ -149,6 +154,9 @@ class RecordingController extends StateNotifier<RecordingState> {
         try {
           _ref.read(routerProvider).go('/live');
         } catch (_) {}
+        return null;
+      case MiniIpc.cmdResumeAutoStop:
+        onResumeAutoStop?.call();
         return null;
     }
     return null;
@@ -578,6 +586,10 @@ class RecordingController extends StateNotifier<RecordingState> {
       tags.add(name);
     }
     state = state.copyWith(activeTags: tags);
+  }
+
+  void setAutoStopCountdown(int? secondsLeft) {
+    state = state.copyWith(autoStopSecondsLeft: secondsLeft);
   }
 
   void setActiveTags(List<String> names) {

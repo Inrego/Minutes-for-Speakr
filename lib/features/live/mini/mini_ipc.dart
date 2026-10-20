@@ -21,6 +21,7 @@ class MiniIpc {
   static const cmdSetSystemMode = 'cmd.setSystemMode';
   static const cmdBeginDrag = 'cmd.beginDrag';
   static const cmdShowMain = 'cmd.showMain';
+  static const cmdResumeAutoStop = 'cmd.resumeAutoStop';
 
   /// desktop_multi_window assigns the host engine the windowId 0. New
   /// child engines get sequential ids (1, 2, …).

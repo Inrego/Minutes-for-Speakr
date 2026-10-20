@@ -40,6 +40,9 @@ sealed class RecordingState with _$RecordingState {
     @Default(0.0) double audioLevel,
     String? processSourceName,
     int? processSourcePid,
+    // Seconds until an idle auto-recording stops; non-null while the
+    // mini pill shows the "meeting ended" countdown.
+    int? autoStopSecondsLeft,
   }) = _RecordingState;
 
   factory RecordingState.fromJson(Map<String, dynamic> json) =>

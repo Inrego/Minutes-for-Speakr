@@ -11,6 +11,10 @@ import 'mic_monitor.dart';
 import 'mic_user.dart';
 import 'output_meter.dart';
 
+/// Length of the "meeting ended" countdown on the mini pill before an
+/// idle auto-recording stops. The pill reads it to scale its progress bar.
+const kAutoStopCountdownSeconds = 10;
+
 /// Reason the coordinator wants the UI to ask the user whether to stop.
 class StopPromptRequest {
   StopPromptRequest({required this.triggerLabel, required this.elapsed});
@@ -41,6 +45,9 @@ class AutoRecordCoordinator {
     required this.onSettingsChanged,
     this.applyTriggerMetadata,
     this.findProcessPids,
+    this.onStopCountdown,
+    this.stopCountdownSeconds = kAutoStopCountdownSeconds,
+    this.countdownTick = const Duration(seconds: 1),
   });
 
   final MicMonitor micMonitor;
@@ -96,6 +103,19 @@ class AutoRecordCoordinator {
     required int? folderId,
   })? applyTriggerMetadata;
 
+  /// Publishes the idle stop-countdown to the UI: seconds left while it
+  /// runs, `null` once it is cancelled. When provided and the mini pill
+  /// is open, an idle meeting starts a countdown on the pill instead of
+  /// emitting a [StopPromptRequest] for the main-window dialog. The
+  /// bootstrap wires this into [RecordingState.autoStopSecondsLeft].
+  final void Function(int? secondsLeft)? onStopCountdown;
+
+  /// Length of the pill countdown before the session is stopped.
+  final int stopCountdownSeconds;
+
+  /// Countdown step. Injectable so tests don't wait real seconds.
+  final Duration countdownTick;
+
   /// Latest state from [recording], mirrored here so the coordinator
   /// can read it synchronously (the underlying [StateNotifier.state]
   /// getter is protected). Updated by [_onRecordingState] via the
@@ -146,9 +166,14 @@ class AutoRecordCoordinator {
   bool _waitingForReactivation = false;
   bool _promptOpen = false;
 
-  /// True while an [AutoRecordSettings.autoStopOnIdle] stop is in flight,
-  /// so peaks arriving before the session ends don't stop it twice.
+  /// True while a countdown-expired stop is in flight, so peaks arriving
+  /// before the session ends don't start another countdown.
   bool _autoStopping = false;
+
+  /// Running idle stop-countdown (see [onStopCountdown]); null when idle.
+  Timer? _countdownTimer;
+  int _countdownLeft = 0;
+  bool get isStopCountdownActive => _countdownTimer != null;
 
   final _prompts = StreamController<StopPromptRequest>.broadcast();
   Stream<StopPromptRequest> get prompts => _prompts.stream;
@@ -180,6 +205,7 @@ class AutoRecordCoordinator {
   }
 
   Future<void> dispose() async {
+    _countdownTimer?.cancel();
     await _micSub?.cancel();
     _removeRecListener?.call();
     await _meterSub?.cancel();
@@ -258,6 +284,7 @@ class AutoRecordCoordinator {
       _micReleasedSinceUtc = null;
       _waitingForReactivation = false;
       if (_promptOpen) _promptOpen = false;
+      _cancelStopCountdown();
     } else {
       _micReleasedSinceUtc ??= now;
     }
@@ -290,6 +317,10 @@ class AutoRecordCoordinator {
       _waitingForReactivation = false;
       _promptOpen = false;
       _autoStopping = false;
+      // No onStopCountdown(null) here: the controller already reset its
+      // state, and writing back from inside its listener would re-enter.
+      _countdownTimer?.cancel();
+      _countdownTimer = null;
     }
   }
 
@@ -305,13 +336,14 @@ class AutoRecordCoordinator {
       // Audio resumed counts as activity — re-arm the prompt if the user
       // had previously picked "Keep recording".
       _waitingForReactivation = false;
+      _cancelStopCountdown();
     }
 
     _maybeFireStopPrompt(settings, now);
   }
 
   void _maybeFireStopPrompt(AutoRecordSettings settings, DateTime now) {
-    if (_promptOpen || _autoStopping) return;
+    if (_promptOpen || _autoStopping || _countdownTimer != null) return;
     if (!_autoSession) return;
     if (_waitingForReactivation) return;
 
@@ -327,10 +359,8 @@ class AutoRecordCoordinator {
     final inactiveFor = now.difference(bothInactiveSince);
     if (inactiveFor < Duration(seconds: settings.silenceSeconds)) return;
 
-    if (settings.autoStopOnIdle) {
-      debugPrint('[auto-record] idle — auto-stopping without prompt');
-      _autoStopping = true;
-      unawaited(stopAutoSession());
+    if (onStopCountdown != null && _recordingState.miniOpen) {
+      _startStopCountdown();
       return;
     }
 
@@ -338,6 +368,42 @@ class AutoRecordCoordinator {
       triggerLabel: _activeTriggerLabel ?? 'recording',
       elapsed: Duration(seconds: _recordingState.elapsedSeconds),
     ));
+  }
+
+  // ── Pill stop-countdown ───────────────────────────────────────────────────
+
+  void _startStopCountdown() {
+    debugPrint('[auto-record] idle — stopping in ${stopCountdownSeconds}s');
+    _countdownLeft = stopCountdownSeconds;
+    onStopCountdown?.call(_countdownLeft);
+    _countdownTimer = Timer.periodic(countdownTick, (timer) {
+      _countdownLeft--;
+      onStopCountdown?.call(_countdownLeft);
+      if (_countdownLeft > 0) return;
+      // Leave the pill on "Stopping…" — the session teardown closes it.
+      timer.cancel();
+      _countdownTimer = null;
+      _autoStopping = true;
+      unawaited(stopAutoSession());
+    });
+  }
+
+  /// Activity resumed (mic re-acquired or audio playing) — drop the
+  /// countdown without the "Keep recording" suppression.
+  void _cancelStopCountdown() {
+    if (_countdownTimer == null) return;
+    _countdownTimer!.cancel();
+    _countdownTimer = null;
+    onStopCountdown?.call(null);
+  }
+
+  /// User clicked "Resume" on the pill during the countdown. Behaves like
+  /// "Continue recording" on the dialog: no further countdown until
+  /// activity resumes and goes idle again.
+  void resumeFromStopCountdown() {
+    if (_countdownTimer == null) return;
+    _cancelStopCountdown();
+    notePromptDismissed(keepRecording: true);
   }
 
   // ── User-confirmed stop ───────────────────────────────────────────────────
