@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RecordingState {
 
- int get elapsedSeconds; bool get paused; bool get started; bool get uploading; String? get error; int get speakers; List<String> get activeTags; int? get folderId; bool get miniOpen; int? get miniWindowId; bool get micEnabled; SystemAudioMode get systemMode; bool get systemAudioSupported; bool get processLoopbackSupported; bool get micPending; bool get systemPending; double get audioLevel; String? get processSourceName; int? get processSourcePid;// Seconds until an idle auto-recording stops; non-null while the
+ int get elapsedSeconds; bool get paused; bool get started; bool get uploading; String? get error; int get speakers; List<String> get activeTags; int? get folderId; bool get miniOpen; int? get miniWindowId; bool get micEnabled; SystemAudioMode get systemMode; bool get systemAudioSupported; bool get processLoopbackSupported; bool get micPending; bool get systemPending; double get audioLevel; String? get processSourceName; int? get processSourcePid; bool get videoSupported;// True when this session writes a video stream (.mp4). Fixed at
+// start: a stream can't be added to a file mid-recording.
+ bool get videoRecording; int? get videoWindowHwnd; String? get videoWindowTitle;// Seconds until an idle auto-recording stops; non-null while the
 // mini pill shows the "meeting ended" countdown.
  int? get autoStopSecondsLeft;
 /// Create a copy of RecordingState
@@ -30,16 +32,16 @@ $RecordingStateCopyWith<RecordingState> get copyWith => _$RecordingStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecordingState&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.paused, paused) || other.paused == paused)&&(identical(other.started, started) || other.started == started)&&(identical(other.uploading, uploading) || other.uploading == uploading)&&(identical(other.error, error) || other.error == error)&&(identical(other.speakers, speakers) || other.speakers == speakers)&&const DeepCollectionEquality().equals(other.activeTags, activeTags)&&(identical(other.folderId, folderId) || other.folderId == folderId)&&(identical(other.miniOpen, miniOpen) || other.miniOpen == miniOpen)&&(identical(other.miniWindowId, miniWindowId) || other.miniWindowId == miniWindowId)&&(identical(other.micEnabled, micEnabled) || other.micEnabled == micEnabled)&&(identical(other.systemMode, systemMode) || other.systemMode == systemMode)&&(identical(other.systemAudioSupported, systemAudioSupported) || other.systemAudioSupported == systemAudioSupported)&&(identical(other.processLoopbackSupported, processLoopbackSupported) || other.processLoopbackSupported == processLoopbackSupported)&&(identical(other.micPending, micPending) || other.micPending == micPending)&&(identical(other.systemPending, systemPending) || other.systemPending == systemPending)&&(identical(other.audioLevel, audioLevel) || other.audioLevel == audioLevel)&&(identical(other.processSourceName, processSourceName) || other.processSourceName == processSourceName)&&(identical(other.processSourcePid, processSourcePid) || other.processSourcePid == processSourcePid)&&(identical(other.autoStopSecondsLeft, autoStopSecondsLeft) || other.autoStopSecondsLeft == autoStopSecondsLeft));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecordingState&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.paused, paused) || other.paused == paused)&&(identical(other.started, started) || other.started == started)&&(identical(other.uploading, uploading) || other.uploading == uploading)&&(identical(other.error, error) || other.error == error)&&(identical(other.speakers, speakers) || other.speakers == speakers)&&const DeepCollectionEquality().equals(other.activeTags, activeTags)&&(identical(other.folderId, folderId) || other.folderId == folderId)&&(identical(other.miniOpen, miniOpen) || other.miniOpen == miniOpen)&&(identical(other.miniWindowId, miniWindowId) || other.miniWindowId == miniWindowId)&&(identical(other.micEnabled, micEnabled) || other.micEnabled == micEnabled)&&(identical(other.systemMode, systemMode) || other.systemMode == systemMode)&&(identical(other.systemAudioSupported, systemAudioSupported) || other.systemAudioSupported == systemAudioSupported)&&(identical(other.processLoopbackSupported, processLoopbackSupported) || other.processLoopbackSupported == processLoopbackSupported)&&(identical(other.micPending, micPending) || other.micPending == micPending)&&(identical(other.systemPending, systemPending) || other.systemPending == systemPending)&&(identical(other.audioLevel, audioLevel) || other.audioLevel == audioLevel)&&(identical(other.processSourceName, processSourceName) || other.processSourceName == processSourceName)&&(identical(other.processSourcePid, processSourcePid) || other.processSourcePid == processSourcePid)&&(identical(other.videoSupported, videoSupported) || other.videoSupported == videoSupported)&&(identical(other.videoRecording, videoRecording) || other.videoRecording == videoRecording)&&(identical(other.videoWindowHwnd, videoWindowHwnd) || other.videoWindowHwnd == videoWindowHwnd)&&(identical(other.videoWindowTitle, videoWindowTitle) || other.videoWindowTitle == videoWindowTitle)&&(identical(other.autoStopSecondsLeft, autoStopSecondsLeft) || other.autoStopSecondsLeft == autoStopSecondsLeft));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,elapsedSeconds,paused,started,uploading,error,speakers,const DeepCollectionEquality().hash(activeTags),folderId,miniOpen,miniWindowId,micEnabled,systemMode,systemAudioSupported,processLoopbackSupported,micPending,systemPending,audioLevel,processSourceName,processSourcePid,autoStopSecondsLeft]);
+int get hashCode => Object.hashAll([runtimeType,elapsedSeconds,paused,started,uploading,error,speakers,const DeepCollectionEquality().hash(activeTags),folderId,miniOpen,miniWindowId,micEnabled,systemMode,systemAudioSupported,processLoopbackSupported,micPending,systemPending,audioLevel,processSourceName,processSourcePid,videoSupported,videoRecording,videoWindowHwnd,videoWindowTitle,autoStopSecondsLeft]);
 
 @override
 String toString() {
-  return 'RecordingState(elapsedSeconds: $elapsedSeconds, paused: $paused, started: $started, uploading: $uploading, error: $error, speakers: $speakers, activeTags: $activeTags, folderId: $folderId, miniOpen: $miniOpen, miniWindowId: $miniWindowId, micEnabled: $micEnabled, systemMode: $systemMode, systemAudioSupported: $systemAudioSupported, processLoopbackSupported: $processLoopbackSupported, micPending: $micPending, systemPending: $systemPending, audioLevel: $audioLevel, processSourceName: $processSourceName, processSourcePid: $processSourcePid, autoStopSecondsLeft: $autoStopSecondsLeft)';
+  return 'RecordingState(elapsedSeconds: $elapsedSeconds, paused: $paused, started: $started, uploading: $uploading, error: $error, speakers: $speakers, activeTags: $activeTags, folderId: $folderId, miniOpen: $miniOpen, miniWindowId: $miniWindowId, micEnabled: $micEnabled, systemMode: $systemMode, systemAudioSupported: $systemAudioSupported, processLoopbackSupported: $processLoopbackSupported, micPending: $micPending, systemPending: $systemPending, audioLevel: $audioLevel, processSourceName: $processSourceName, processSourcePid: $processSourcePid, videoSupported: $videoSupported, videoRecording: $videoRecording, videoWindowHwnd: $videoWindowHwnd, videoWindowTitle: $videoWindowTitle, autoStopSecondsLeft: $autoStopSecondsLeft)';
 }
 
 
@@ -50,7 +52,7 @@ abstract mixin class $RecordingStateCopyWith<$Res>  {
   factory $RecordingStateCopyWith(RecordingState value, $Res Function(RecordingState) _then) = _$RecordingStateCopyWithImpl;
 @useResult
 $Res call({
- int elapsedSeconds, bool paused, bool started, bool uploading, String? error, int speakers, List<String> activeTags, int? folderId, bool miniOpen, int? miniWindowId, bool micEnabled, SystemAudioMode systemMode, bool systemAudioSupported, bool processLoopbackSupported, bool micPending, bool systemPending, double audioLevel, String? processSourceName, int? processSourcePid, int? autoStopSecondsLeft
+ int elapsedSeconds, bool paused, bool started, bool uploading, String? error, int speakers, List<String> activeTags, int? folderId, bool miniOpen, int? miniWindowId, bool micEnabled, SystemAudioMode systemMode, bool systemAudioSupported, bool processLoopbackSupported, bool micPending, bool systemPending, double audioLevel, String? processSourceName, int? processSourcePid, bool videoSupported, bool videoRecording, int? videoWindowHwnd, String? videoWindowTitle, int? autoStopSecondsLeft
 });
 
 
@@ -67,7 +69,7 @@ class _$RecordingStateCopyWithImpl<$Res>
 
 /// Create a copy of RecordingState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? elapsedSeconds = null,Object? paused = null,Object? started = null,Object? uploading = null,Object? error = freezed,Object? speakers = null,Object? activeTags = null,Object? folderId = freezed,Object? miniOpen = null,Object? miniWindowId = freezed,Object? micEnabled = null,Object? systemMode = null,Object? systemAudioSupported = null,Object? processLoopbackSupported = null,Object? micPending = null,Object? systemPending = null,Object? audioLevel = null,Object? processSourceName = freezed,Object? processSourcePid = freezed,Object? autoStopSecondsLeft = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? elapsedSeconds = null,Object? paused = null,Object? started = null,Object? uploading = null,Object? error = freezed,Object? speakers = null,Object? activeTags = null,Object? folderId = freezed,Object? miniOpen = null,Object? miniWindowId = freezed,Object? micEnabled = null,Object? systemMode = null,Object? systemAudioSupported = null,Object? processLoopbackSupported = null,Object? micPending = null,Object? systemPending = null,Object? audioLevel = null,Object? processSourceName = freezed,Object? processSourcePid = freezed,Object? videoSupported = null,Object? videoRecording = null,Object? videoWindowHwnd = freezed,Object? videoWindowTitle = freezed,Object? autoStopSecondsLeft = freezed,}) {
   return _then(_self.copyWith(
 elapsedSeconds: null == elapsedSeconds ? _self.elapsedSeconds : elapsedSeconds // ignore: cast_nullable_to_non_nullable
 as int,paused: null == paused ? _self.paused : paused // ignore: cast_nullable_to_non_nullable
@@ -88,7 +90,11 @@ as bool,systemPending: null == systemPending ? _self.systemPending : systemPendi
 as bool,audioLevel: null == audioLevel ? _self.audioLevel : audioLevel // ignore: cast_nullable_to_non_nullable
 as double,processSourceName: freezed == processSourceName ? _self.processSourceName : processSourceName // ignore: cast_nullable_to_non_nullable
 as String?,processSourcePid: freezed == processSourcePid ? _self.processSourcePid : processSourcePid // ignore: cast_nullable_to_non_nullable
-as int?,autoStopSecondsLeft: freezed == autoStopSecondsLeft ? _self.autoStopSecondsLeft : autoStopSecondsLeft // ignore: cast_nullable_to_non_nullable
+as int?,videoSupported: null == videoSupported ? _self.videoSupported : videoSupported // ignore: cast_nullable_to_non_nullable
+as bool,videoRecording: null == videoRecording ? _self.videoRecording : videoRecording // ignore: cast_nullable_to_non_nullable
+as bool,videoWindowHwnd: freezed == videoWindowHwnd ? _self.videoWindowHwnd : videoWindowHwnd // ignore: cast_nullable_to_non_nullable
+as int?,videoWindowTitle: freezed == videoWindowTitle ? _self.videoWindowTitle : videoWindowTitle // ignore: cast_nullable_to_non_nullable
+as String?,autoStopSecondsLeft: freezed == autoStopSecondsLeft ? _self.autoStopSecondsLeft : autoStopSecondsLeft // ignore: cast_nullable_to_non_nullable
 as int?,
   ));
 }
@@ -171,10 +177,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int elapsedSeconds,  bool paused,  bool started,  bool uploading,  String? error,  int speakers,  List<String> activeTags,  int? folderId,  bool miniOpen,  int? miniWindowId,  bool micEnabled,  SystemAudioMode systemMode,  bool systemAudioSupported,  bool processLoopbackSupported,  bool micPending,  bool systemPending,  double audioLevel,  String? processSourceName,  int? processSourcePid,  int? autoStopSecondsLeft)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int elapsedSeconds,  bool paused,  bool started,  bool uploading,  String? error,  int speakers,  List<String> activeTags,  int? folderId,  bool miniOpen,  int? miniWindowId,  bool micEnabled,  SystemAudioMode systemMode,  bool systemAudioSupported,  bool processLoopbackSupported,  bool micPending,  bool systemPending,  double audioLevel,  String? processSourceName,  int? processSourcePid,  bool videoSupported,  bool videoRecording,  int? videoWindowHwnd,  String? videoWindowTitle,  int? autoStopSecondsLeft)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RecordingState() when $default != null:
-return $default(_that.elapsedSeconds,_that.paused,_that.started,_that.uploading,_that.error,_that.speakers,_that.activeTags,_that.folderId,_that.miniOpen,_that.miniWindowId,_that.micEnabled,_that.systemMode,_that.systemAudioSupported,_that.processLoopbackSupported,_that.micPending,_that.systemPending,_that.audioLevel,_that.processSourceName,_that.processSourcePid,_that.autoStopSecondsLeft);case _:
+return $default(_that.elapsedSeconds,_that.paused,_that.started,_that.uploading,_that.error,_that.speakers,_that.activeTags,_that.folderId,_that.miniOpen,_that.miniWindowId,_that.micEnabled,_that.systemMode,_that.systemAudioSupported,_that.processLoopbackSupported,_that.micPending,_that.systemPending,_that.audioLevel,_that.processSourceName,_that.processSourcePid,_that.videoSupported,_that.videoRecording,_that.videoWindowHwnd,_that.videoWindowTitle,_that.autoStopSecondsLeft);case _:
   return orElse();
 
 }
@@ -192,10 +198,10 @@ return $default(_that.elapsedSeconds,_that.paused,_that.started,_that.uploading,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int elapsedSeconds,  bool paused,  bool started,  bool uploading,  String? error,  int speakers,  List<String> activeTags,  int? folderId,  bool miniOpen,  int? miniWindowId,  bool micEnabled,  SystemAudioMode systemMode,  bool systemAudioSupported,  bool processLoopbackSupported,  bool micPending,  bool systemPending,  double audioLevel,  String? processSourceName,  int? processSourcePid,  int? autoStopSecondsLeft)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int elapsedSeconds,  bool paused,  bool started,  bool uploading,  String? error,  int speakers,  List<String> activeTags,  int? folderId,  bool miniOpen,  int? miniWindowId,  bool micEnabled,  SystemAudioMode systemMode,  bool systemAudioSupported,  bool processLoopbackSupported,  bool micPending,  bool systemPending,  double audioLevel,  String? processSourceName,  int? processSourcePid,  bool videoSupported,  bool videoRecording,  int? videoWindowHwnd,  String? videoWindowTitle,  int? autoStopSecondsLeft)  $default,) {final _that = this;
 switch (_that) {
 case _RecordingState():
-return $default(_that.elapsedSeconds,_that.paused,_that.started,_that.uploading,_that.error,_that.speakers,_that.activeTags,_that.folderId,_that.miniOpen,_that.miniWindowId,_that.micEnabled,_that.systemMode,_that.systemAudioSupported,_that.processLoopbackSupported,_that.micPending,_that.systemPending,_that.audioLevel,_that.processSourceName,_that.processSourcePid,_that.autoStopSecondsLeft);}
+return $default(_that.elapsedSeconds,_that.paused,_that.started,_that.uploading,_that.error,_that.speakers,_that.activeTags,_that.folderId,_that.miniOpen,_that.miniWindowId,_that.micEnabled,_that.systemMode,_that.systemAudioSupported,_that.processLoopbackSupported,_that.micPending,_that.systemPending,_that.audioLevel,_that.processSourceName,_that.processSourcePid,_that.videoSupported,_that.videoRecording,_that.videoWindowHwnd,_that.videoWindowTitle,_that.autoStopSecondsLeft);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -209,10 +215,10 @@ return $default(_that.elapsedSeconds,_that.paused,_that.started,_that.uploading,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int elapsedSeconds,  bool paused,  bool started,  bool uploading,  String? error,  int speakers,  List<String> activeTags,  int? folderId,  bool miniOpen,  int? miniWindowId,  bool micEnabled,  SystemAudioMode systemMode,  bool systemAudioSupported,  bool processLoopbackSupported,  bool micPending,  bool systemPending,  double audioLevel,  String? processSourceName,  int? processSourcePid,  int? autoStopSecondsLeft)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int elapsedSeconds,  bool paused,  bool started,  bool uploading,  String? error,  int speakers,  List<String> activeTags,  int? folderId,  bool miniOpen,  int? miniWindowId,  bool micEnabled,  SystemAudioMode systemMode,  bool systemAudioSupported,  bool processLoopbackSupported,  bool micPending,  bool systemPending,  double audioLevel,  String? processSourceName,  int? processSourcePid,  bool videoSupported,  bool videoRecording,  int? videoWindowHwnd,  String? videoWindowTitle,  int? autoStopSecondsLeft)?  $default,) {final _that = this;
 switch (_that) {
 case _RecordingState() when $default != null:
-return $default(_that.elapsedSeconds,_that.paused,_that.started,_that.uploading,_that.error,_that.speakers,_that.activeTags,_that.folderId,_that.miniOpen,_that.miniWindowId,_that.micEnabled,_that.systemMode,_that.systemAudioSupported,_that.processLoopbackSupported,_that.micPending,_that.systemPending,_that.audioLevel,_that.processSourceName,_that.processSourcePid,_that.autoStopSecondsLeft);case _:
+return $default(_that.elapsedSeconds,_that.paused,_that.started,_that.uploading,_that.error,_that.speakers,_that.activeTags,_that.folderId,_that.miniOpen,_that.miniWindowId,_that.micEnabled,_that.systemMode,_that.systemAudioSupported,_that.processLoopbackSupported,_that.micPending,_that.systemPending,_that.audioLevel,_that.processSourceName,_that.processSourcePid,_that.videoSupported,_that.videoRecording,_that.videoWindowHwnd,_that.videoWindowTitle,_that.autoStopSecondsLeft);case _:
   return null;
 
 }
@@ -224,7 +230,7 @@ return $default(_that.elapsedSeconds,_that.paused,_that.started,_that.uploading,
 @JsonSerializable()
 
 class _RecordingState extends RecordingState {
-  const _RecordingState({this.elapsedSeconds = 0, this.paused = false, this.started = false, this.uploading = false, this.error, this.speakers = 2, final  List<String> activeTags = const <String>[], this.folderId, this.miniOpen = false, this.miniWindowId, this.micEnabled = true, this.systemMode = SystemAudioMode.off, this.systemAudioSupported = false, this.processLoopbackSupported = false, this.micPending = false, this.systemPending = false, this.audioLevel = 0.0, this.processSourceName, this.processSourcePid, this.autoStopSecondsLeft}): _activeTags = activeTags,super._();
+  const _RecordingState({this.elapsedSeconds = 0, this.paused = false, this.started = false, this.uploading = false, this.error, this.speakers = 2, final  List<String> activeTags = const <String>[], this.folderId, this.miniOpen = false, this.miniWindowId, this.micEnabled = true, this.systemMode = SystemAudioMode.off, this.systemAudioSupported = false, this.processLoopbackSupported = false, this.micPending = false, this.systemPending = false, this.audioLevel = 0.0, this.processSourceName, this.processSourcePid, this.videoSupported = false, this.videoRecording = false, this.videoWindowHwnd, this.videoWindowTitle, this.autoStopSecondsLeft}): _activeTags = activeTags,super._();
   factory _RecordingState.fromJson(Map<String, dynamic> json) => _$RecordingStateFromJson(json);
 
 @override@JsonKey() final  int elapsedSeconds;
@@ -252,6 +258,12 @@ class _RecordingState extends RecordingState {
 @override@JsonKey() final  double audioLevel;
 @override final  String? processSourceName;
 @override final  int? processSourcePid;
+@override@JsonKey() final  bool videoSupported;
+// True when this session writes a video stream (.mp4). Fixed at
+// start: a stream can't be added to a file mid-recording.
+@override@JsonKey() final  bool videoRecording;
+@override final  int? videoWindowHwnd;
+@override final  String? videoWindowTitle;
 // Seconds until an idle auto-recording stops; non-null while the
 // mini pill shows the "meeting ended" countdown.
 @override final  int? autoStopSecondsLeft;
@@ -269,16 +281,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecordingState&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.paused, paused) || other.paused == paused)&&(identical(other.started, started) || other.started == started)&&(identical(other.uploading, uploading) || other.uploading == uploading)&&(identical(other.error, error) || other.error == error)&&(identical(other.speakers, speakers) || other.speakers == speakers)&&const DeepCollectionEquality().equals(other._activeTags, _activeTags)&&(identical(other.folderId, folderId) || other.folderId == folderId)&&(identical(other.miniOpen, miniOpen) || other.miniOpen == miniOpen)&&(identical(other.miniWindowId, miniWindowId) || other.miniWindowId == miniWindowId)&&(identical(other.micEnabled, micEnabled) || other.micEnabled == micEnabled)&&(identical(other.systemMode, systemMode) || other.systemMode == systemMode)&&(identical(other.systemAudioSupported, systemAudioSupported) || other.systemAudioSupported == systemAudioSupported)&&(identical(other.processLoopbackSupported, processLoopbackSupported) || other.processLoopbackSupported == processLoopbackSupported)&&(identical(other.micPending, micPending) || other.micPending == micPending)&&(identical(other.systemPending, systemPending) || other.systemPending == systemPending)&&(identical(other.audioLevel, audioLevel) || other.audioLevel == audioLevel)&&(identical(other.processSourceName, processSourceName) || other.processSourceName == processSourceName)&&(identical(other.processSourcePid, processSourcePid) || other.processSourcePid == processSourcePid)&&(identical(other.autoStopSecondsLeft, autoStopSecondsLeft) || other.autoStopSecondsLeft == autoStopSecondsLeft));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecordingState&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.paused, paused) || other.paused == paused)&&(identical(other.started, started) || other.started == started)&&(identical(other.uploading, uploading) || other.uploading == uploading)&&(identical(other.error, error) || other.error == error)&&(identical(other.speakers, speakers) || other.speakers == speakers)&&const DeepCollectionEquality().equals(other._activeTags, _activeTags)&&(identical(other.folderId, folderId) || other.folderId == folderId)&&(identical(other.miniOpen, miniOpen) || other.miniOpen == miniOpen)&&(identical(other.miniWindowId, miniWindowId) || other.miniWindowId == miniWindowId)&&(identical(other.micEnabled, micEnabled) || other.micEnabled == micEnabled)&&(identical(other.systemMode, systemMode) || other.systemMode == systemMode)&&(identical(other.systemAudioSupported, systemAudioSupported) || other.systemAudioSupported == systemAudioSupported)&&(identical(other.processLoopbackSupported, processLoopbackSupported) || other.processLoopbackSupported == processLoopbackSupported)&&(identical(other.micPending, micPending) || other.micPending == micPending)&&(identical(other.systemPending, systemPending) || other.systemPending == systemPending)&&(identical(other.audioLevel, audioLevel) || other.audioLevel == audioLevel)&&(identical(other.processSourceName, processSourceName) || other.processSourceName == processSourceName)&&(identical(other.processSourcePid, processSourcePid) || other.processSourcePid == processSourcePid)&&(identical(other.videoSupported, videoSupported) || other.videoSupported == videoSupported)&&(identical(other.videoRecording, videoRecording) || other.videoRecording == videoRecording)&&(identical(other.videoWindowHwnd, videoWindowHwnd) || other.videoWindowHwnd == videoWindowHwnd)&&(identical(other.videoWindowTitle, videoWindowTitle) || other.videoWindowTitle == videoWindowTitle)&&(identical(other.autoStopSecondsLeft, autoStopSecondsLeft) || other.autoStopSecondsLeft == autoStopSecondsLeft));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,elapsedSeconds,paused,started,uploading,error,speakers,const DeepCollectionEquality().hash(_activeTags),folderId,miniOpen,miniWindowId,micEnabled,systemMode,systemAudioSupported,processLoopbackSupported,micPending,systemPending,audioLevel,processSourceName,processSourcePid,autoStopSecondsLeft]);
+int get hashCode => Object.hashAll([runtimeType,elapsedSeconds,paused,started,uploading,error,speakers,const DeepCollectionEquality().hash(_activeTags),folderId,miniOpen,miniWindowId,micEnabled,systemMode,systemAudioSupported,processLoopbackSupported,micPending,systemPending,audioLevel,processSourceName,processSourcePid,videoSupported,videoRecording,videoWindowHwnd,videoWindowTitle,autoStopSecondsLeft]);
 
 @override
 String toString() {
-  return 'RecordingState(elapsedSeconds: $elapsedSeconds, paused: $paused, started: $started, uploading: $uploading, error: $error, speakers: $speakers, activeTags: $activeTags, folderId: $folderId, miniOpen: $miniOpen, miniWindowId: $miniWindowId, micEnabled: $micEnabled, systemMode: $systemMode, systemAudioSupported: $systemAudioSupported, processLoopbackSupported: $processLoopbackSupported, micPending: $micPending, systemPending: $systemPending, audioLevel: $audioLevel, processSourceName: $processSourceName, processSourcePid: $processSourcePid, autoStopSecondsLeft: $autoStopSecondsLeft)';
+  return 'RecordingState(elapsedSeconds: $elapsedSeconds, paused: $paused, started: $started, uploading: $uploading, error: $error, speakers: $speakers, activeTags: $activeTags, folderId: $folderId, miniOpen: $miniOpen, miniWindowId: $miniWindowId, micEnabled: $micEnabled, systemMode: $systemMode, systemAudioSupported: $systemAudioSupported, processLoopbackSupported: $processLoopbackSupported, micPending: $micPending, systemPending: $systemPending, audioLevel: $audioLevel, processSourceName: $processSourceName, processSourcePid: $processSourcePid, videoSupported: $videoSupported, videoRecording: $videoRecording, videoWindowHwnd: $videoWindowHwnd, videoWindowTitle: $videoWindowTitle, autoStopSecondsLeft: $autoStopSecondsLeft)';
 }
 
 
@@ -289,7 +301,7 @@ abstract mixin class _$RecordingStateCopyWith<$Res> implements $RecordingStateCo
   factory _$RecordingStateCopyWith(_RecordingState value, $Res Function(_RecordingState) _then) = __$RecordingStateCopyWithImpl;
 @override @useResult
 $Res call({
- int elapsedSeconds, bool paused, bool started, bool uploading, String? error, int speakers, List<String> activeTags, int? folderId, bool miniOpen, int? miniWindowId, bool micEnabled, SystemAudioMode systemMode, bool systemAudioSupported, bool processLoopbackSupported, bool micPending, bool systemPending, double audioLevel, String? processSourceName, int? processSourcePid, int? autoStopSecondsLeft
+ int elapsedSeconds, bool paused, bool started, bool uploading, String? error, int speakers, List<String> activeTags, int? folderId, bool miniOpen, int? miniWindowId, bool micEnabled, SystemAudioMode systemMode, bool systemAudioSupported, bool processLoopbackSupported, bool micPending, bool systemPending, double audioLevel, String? processSourceName, int? processSourcePid, bool videoSupported, bool videoRecording, int? videoWindowHwnd, String? videoWindowTitle, int? autoStopSecondsLeft
 });
 
 
@@ -306,7 +318,7 @@ class __$RecordingStateCopyWithImpl<$Res>
 
 /// Create a copy of RecordingState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? elapsedSeconds = null,Object? paused = null,Object? started = null,Object? uploading = null,Object? error = freezed,Object? speakers = null,Object? activeTags = null,Object? folderId = freezed,Object? miniOpen = null,Object? miniWindowId = freezed,Object? micEnabled = null,Object? systemMode = null,Object? systemAudioSupported = null,Object? processLoopbackSupported = null,Object? micPending = null,Object? systemPending = null,Object? audioLevel = null,Object? processSourceName = freezed,Object? processSourcePid = freezed,Object? autoStopSecondsLeft = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? elapsedSeconds = null,Object? paused = null,Object? started = null,Object? uploading = null,Object? error = freezed,Object? speakers = null,Object? activeTags = null,Object? folderId = freezed,Object? miniOpen = null,Object? miniWindowId = freezed,Object? micEnabled = null,Object? systemMode = null,Object? systemAudioSupported = null,Object? processLoopbackSupported = null,Object? micPending = null,Object? systemPending = null,Object? audioLevel = null,Object? processSourceName = freezed,Object? processSourcePid = freezed,Object? videoSupported = null,Object? videoRecording = null,Object? videoWindowHwnd = freezed,Object? videoWindowTitle = freezed,Object? autoStopSecondsLeft = freezed,}) {
   return _then(_RecordingState(
 elapsedSeconds: null == elapsedSeconds ? _self.elapsedSeconds : elapsedSeconds // ignore: cast_nullable_to_non_nullable
 as int,paused: null == paused ? _self.paused : paused // ignore: cast_nullable_to_non_nullable
@@ -327,7 +339,11 @@ as bool,systemPending: null == systemPending ? _self.systemPending : systemPendi
 as bool,audioLevel: null == audioLevel ? _self.audioLevel : audioLevel // ignore: cast_nullable_to_non_nullable
 as double,processSourceName: freezed == processSourceName ? _self.processSourceName : processSourceName // ignore: cast_nullable_to_non_nullable
 as String?,processSourcePid: freezed == processSourcePid ? _self.processSourcePid : processSourcePid // ignore: cast_nullable_to_non_nullable
-as int?,autoStopSecondsLeft: freezed == autoStopSecondsLeft ? _self.autoStopSecondsLeft : autoStopSecondsLeft // ignore: cast_nullable_to_non_nullable
+as int?,videoSupported: null == videoSupported ? _self.videoSupported : videoSupported // ignore: cast_nullable_to_non_nullable
+as bool,videoRecording: null == videoRecording ? _self.videoRecording : videoRecording // ignore: cast_nullable_to_non_nullable
+as bool,videoWindowHwnd: freezed == videoWindowHwnd ? _self.videoWindowHwnd : videoWindowHwnd // ignore: cast_nullable_to_non_nullable
+as int?,videoWindowTitle: freezed == videoWindowTitle ? _self.videoWindowTitle : videoWindowTitle // ignore: cast_nullable_to_non_nullable
+as String?,autoStopSecondsLeft: freezed == autoStopSecondsLeft ? _self.autoStopSecondsLeft : autoStopSecondsLeft // ignore: cast_nullable_to_non_nullable
 as int?,
   ));
 }

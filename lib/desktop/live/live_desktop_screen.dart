@@ -15,6 +15,7 @@ import '../../features/live/recording_state.dart';
 import '../../features/live/widgets/discard_sheet.dart';
 import '../../features/live/widgets/recording_widgets.dart'
     show PillSourceCard, PillSourceOption;
+import '../../services/audio/live_audio_recorder.dart' show CaptureWindow;
 import '../../services/preferences/time_format_preference.dart';
 import '../../services/preferences/time_format_providers.dart';
 import '../../theme/colors.dart';
@@ -762,6 +763,20 @@ class _CapturePanelState extends ConsumerState<_CapturePanel> {
                 style: SpeakrText.sans(size: 11, color: SpeakrColors.muted),
               ),
             ),
+          if (state.videoSupported) ...[
+            const SizedBox(height: 8),
+            if (state.videoRecording)
+              _VideoSourceCard(state: state, controller: controller)
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  'Video is off for this recording. Turn on "Record video" '
+                  'in Settings to record the meeting window.',
+                  style: SpeakrText.sans(size: 11, color: SpeakrColors.muted),
+                ),
+              ),
+          ],
           const SizedBox(height: 22),
           _SectionHeading('Speakers'),
           const SizedBox(height: 8),
@@ -823,6 +838,108 @@ class _CapturePanelState extends ConsumerState<_CapturePanel> {
       ),
     );
   }
+}
+
+/// The recorded window, with a menu to switch to another window or to
+/// none (black frames). Video itself can't be turned on or off
+/// mid-recording: the file's streams are fixed when it starts.
+class _VideoSourceCard extends StatelessWidget {
+  const _VideoSourceCard({required this.state, required this.controller});
+  final RecordingState state;
+  final RecordingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = state.videoWindowTitle;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: SpeakrColors.line),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: title != null
+                  ? const Color(0xFF3A8A5A)
+                  : SpeakrColors.line,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Video',
+                  style: SpeakrText.sans(
+                    size: 13,
+                    weight: FontWeight.w500,
+                    color: SpeakrColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  title ?? 'No window · recording black',
+                  style: SpeakrText.sans(size: 11, color: SpeakrColors.muted),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => _pickWindow(context),
+            child: Text(
+              'Change',
+              style: SpeakrText.sans(size: 12, color: SpeakrColors.ink),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickWindow(BuildContext context) async {
+    final box = context.findRenderObject() as RenderBox?;
+    final windows = await controller.listCaptureWindows();
+    if (box == null || !context.mounted) return;
+    final origin = box.localToGlobal(Offset(0, box.size.height));
+    // Wrapped so "no window" (null) is distinguishable from dismissal.
+    final picked = await showMenu<_WindowChoice>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        origin.dx,
+        origin.dy,
+        origin.dx + box.size.width,
+        origin.dy,
+      ),
+      items: [
+        const PopupMenuItem(
+          value: _WindowChoice(null),
+          child: Text('No window (black)'),
+        ),
+        for (final w in windows)
+          PopupMenuItem(
+            value: _WindowChoice(w),
+            child: SizedBox(
+              width: 280,
+              child: Text(w.title, overflow: TextOverflow.ellipsis),
+            ),
+          ),
+      ],
+    );
+    if (picked != null) await controller.selectVideoWindow(picked.window);
+  }
+}
+
+class _WindowChoice {
+  const _WindowChoice(this.window);
+  final CaptureWindow? window;
 }
 
 class _SectionHeading extends StatelessWidget {

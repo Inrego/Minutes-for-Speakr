@@ -55,15 +55,21 @@ class FakeRecordingController extends StateNotifier<RecordingState> {
   SystemAudioMode? lastStartSystemMode;
   String? lastStartProcessSourceName;
   int? lastStartProcessSourcePid;
+  bool? lastStartVideoEnabled;
+  List<int>? lastStartVideoPids;
 
   Future<void> start({
     bool? micEnabled,
     SystemAudioMode? systemMode,
     String? processSourceName,
     int? processSourcePid,
+    bool? videoEnabled,
+    List<int>? videoPids,
   }) async {
     startedCalled = true;
     startCallCount++;
+    lastStartVideoEnabled = videoEnabled;
+    lastStartVideoPids = videoPids;
     lastStartMicEnabled = micEnabled;
     lastStartSystemMode = systemMode;
     lastStartProcessSourceName = processSourceName;
@@ -542,6 +548,64 @@ void main() {
     expect(rec.lastStartProcessSourcePid, isNull);
   });
 
+  test('video alone resolves every PID of the trigger app', () async {
+    await store.write(const AutoRecordSettings(
+      enabled: true,
+      defaultSystemEnabled: false,
+      defaultVideoEnabled: true,
+      allowlist: [
+        AllowlistEntry(
+          key: 'MSTeams',
+          displayName: 'Microsoft Teams',
+          kind: AllowlistKind.packagedPrefix,
+        ),
+      ],
+    ));
+    await coord.dispose();
+    coord = AutoRecordCoordinator(
+      micMonitor: mic,
+      outputMeter: meter,
+      recording: rec,
+      startRecording: rec.start,
+      stopAndUpload: rec.stopAndUpload,
+      cancelRecording: rec.cancel,
+      store: store,
+      onSettingsChanged: () {},
+      findProcessPids: ({exePath, required matchKey, required kind}) async =>
+          const [4242, 4343],
+      applyTriggerMetadata: (
+          {required speakers, required tagIds, required folderId}) {},
+    );
+    coord.start();
+    mic.emit([
+      _u(key: 'MSTeams', kind: AllowlistKind.packagedPrefix, inUse: true),
+    ]);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(rec.lastStartSystemMode, SystemAudioMode.off);
+    expect(rec.lastStartVideoEnabled, isTrue);
+    expect(rec.lastStartVideoPids, [4242, 4343]);
+  });
+
+  test('per-app video override beats the global default', () async {
+    await store.write(const AutoRecordSettings(
+      enabled: true,
+      defaultVideoEnabled: true,
+      allowlist: [
+        AllowlistEntry(
+          key: 'Teams.exe',
+          displayName: 'Teams',
+          kind: AllowlistKind.exeBasename,
+          videoEnabled: false,
+        ),
+      ],
+    ));
+    mic.emit([
+      _u(key: 'Teams.exe', kind: AllowlistKind.exeBasename, inUse: true),
+    ]);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(rec.lastStartVideoEnabled, isFalse);
+  });
+
   test('applies per-app speakers override when entry has one', () async {
     await store.write(const AutoRecordSettings(
       enabled: true,
@@ -986,6 +1050,8 @@ class _FailingRecordingController extends StateNotifier<RecordingState> {
     SystemAudioMode? systemMode,
     String? processSourceName,
     int? processSourcePid,
+    bool? videoEnabled,
+    List<int>? videoPids,
   }) async {
     // Simulate failure: don't flip `started`.
   }

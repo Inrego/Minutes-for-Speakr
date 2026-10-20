@@ -102,6 +102,7 @@ class SpeakrApi {
     DateTime? fileLastModified,
     String? notes,
     void Function(int sent, int total)? onProgress,
+    Duration? sendTimeout,
   }) async {
     final form = FormData.fromMap({
       'file': await MultipartFile.fromFile(
@@ -123,6 +124,7 @@ class SpeakrApi {
         '/recordings/upload',
         data: form,
         onSendProgress: onProgress,
+        options: sendTimeout == null ? null : Options(sendTimeout: sendTimeout),
       );
       return Recording.fromJson(_unwrap(res.data ?? {}, 'recording'));
     } on DioException catch (e) {

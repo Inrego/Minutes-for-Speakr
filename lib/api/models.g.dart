@@ -179,6 +179,8 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
       json['connector_supports_hotwords'] as bool? ?? false,
   connectorSupportsInitialPrompt:
       json['connector_supports_initial_prompt'] as bool? ?? false,
+  videoRetention: json['video_retention'] as bool? ?? false,
+  maxFileSizeMb: (json['max_file_size_mb'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
@@ -187,6 +189,8 @@ Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
   'connector_supports_speaker_count': instance.connectorSupportsSpeakerCount,
   'connector_supports_hotwords': instance.connectorSupportsHotwords,
   'connector_supports_initial_prompt': instance.connectorSupportsInitialPrompt,
+  'video_retention': instance.videoRetention,
+  'max_file_size_mb': instance.maxFileSizeMb,
 };
 
 _RecordingPage _$RecordingPageFromJson(Map<String, dynamic> json) =>

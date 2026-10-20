@@ -22,6 +22,9 @@ class RecordPluginAudioRecorder implements LiveAudioRecorder {
   bool get supportsProcessLoopback => false;
 
   @override
+  bool get supportsVideo => false;
+
+  @override
   bool get supportsLiveMicToggle => false;
 
   @override
@@ -66,12 +69,22 @@ class RecordPluginAudioRecorder implements LiveAudioRecorder {
       const <int>[];
 
   @override
+  Future<List<CaptureWindow>> findCaptureWindows({
+    List<int> pids = const [],
+  }) async =>
+      const <CaptureWindow>[];
+
+  @override
   Future<void> start({
     required String path,
     required bool micEnabled,
     required SystemAudioMode systemMode,
     int? processLoopbackPid,
+    int? videoHwnd,
   }) async {
+    if (videoHwnd != null) {
+      throw UnsupportedError('Video capture is not supported on this platform.');
+    }
     if (systemMode != SystemAudioMode.off) {
       throw UnsupportedError(
           'System audio capture is not supported on this platform.');
@@ -118,6 +131,9 @@ class RecordPluginAudioRecorder implements LiveAudioRecorder {
     }
     // Disabling a never-enabled source is a no-op.
   }
+
+  @override
+  Future<void> setVideoTarget(int? hwnd) async {}
 
   @override
   Future<String?> stop() => _recorder.stop();

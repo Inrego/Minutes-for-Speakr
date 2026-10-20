@@ -54,12 +54,16 @@ class AutoRecordBootstrap {
           SystemAudioMode? systemMode,
           String? processSourceName,
           int? processSourcePid,
+          bool? videoEnabled,
+          List<int>? videoPids,
         }) =>
             recording.start(
           micEnabled: micEnabled,
           systemMode: systemMode,
           processSourceName: processSourceName,
           processSourcePid: processSourcePid,
+          videoEnabled: videoEnabled,
+          videoPids: videoPids,
         ),
         findProcessPids: ({
           String? exePath,

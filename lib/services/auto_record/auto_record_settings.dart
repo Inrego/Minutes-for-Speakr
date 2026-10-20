@@ -49,6 +49,7 @@ class AllowlistEntry {
     this.micEnabled,
     this.systemEnabled,
     this.systemScope,
+    this.videoEnabled,
   });
 
   /// The match value: an exe basename or an MSIX family prefix. Stored
@@ -85,6 +86,10 @@ class AllowlistEntry {
   /// honored when [systemEnabled] resolves to true.
   final SystemAudioScope? systemScope;
 
+  /// Per-app override for whether the app's window is recorded as
+  /// video. `null` means use [AutoRecordSettings.defaultVideoEnabled].
+  final bool? videoEnabled;
+
   AllowlistEntry copyWith({
     String? key,
     String? displayName,
@@ -95,6 +100,7 @@ class AllowlistEntry {
     Object? micEnabled = _sentinel,
     Object? systemEnabled = _sentinel,
     Object? systemScope = _sentinel,
+    Object? videoEnabled = _sentinel,
   }) {
     return AllowlistEntry(
       key: key ?? this.key,
@@ -112,6 +118,9 @@ class AllowlistEntry {
       systemScope: identical(systemScope, _sentinel)
           ? this.systemScope
           : systemScope as SystemAudioScope?,
+      videoEnabled: identical(videoEnabled, _sentinel)
+          ? this.videoEnabled
+          : videoEnabled as bool?,
     );
   }
 
@@ -126,6 +135,7 @@ class AllowlistEntry {
         if (micEnabled != null) 'micEnabled': micEnabled,
         if (systemEnabled != null) 'systemEnabled': systemEnabled,
         if (systemScope != null) 'systemScope': _scopeToJson(systemScope!),
+        if (videoEnabled != null) 'videoEnabled': videoEnabled,
       };
 
   factory AllowlistEntry.fromJson(Map<String, dynamic> json) {
@@ -147,6 +157,7 @@ class AllowlistEntry {
       micEnabled: json['micEnabled'] as bool?,
       systemEnabled: json['systemEnabled'] as bool?,
       systemScope: _scopeFromJson(json['systemScope']),
+      videoEnabled: json['videoEnabled'] as bool?,
     );
   }
 
@@ -218,6 +229,7 @@ class AutoRecordSettings {
     this.defaultMicEnabled = true,
     this.defaultSystemEnabled = false,
     this.defaultSystemScope = SystemAudioScope.allSystem,
+    this.defaultVideoEnabled = false,
   });
 
   final bool enabled;
@@ -249,6 +261,10 @@ class AutoRecordSettings {
   /// that don't override [AllowlistEntry.systemScope] fall back to this.
   final SystemAudioScope defaultSystemScope;
 
+  /// Default for recording the meeting app's window as video. Only
+  /// honored where `LiveAudioRecorder.supportsVideo` is true (Windows).
+  final bool defaultVideoEnabled;
+
   AutoRecordSettings copyWith({
     bool? enabled,
     List<AllowlistEntry>? allowlist,
@@ -261,6 +277,7 @@ class AutoRecordSettings {
     bool? defaultMicEnabled,
     bool? defaultSystemEnabled,
     SystemAudioScope? defaultSystemScope,
+    bool? defaultVideoEnabled,
   }) {
     return AutoRecordSettings(
       enabled: enabled ?? this.enabled,
@@ -276,6 +293,7 @@ class AutoRecordSettings {
       defaultMicEnabled: defaultMicEnabled ?? this.defaultMicEnabled,
       defaultSystemEnabled: defaultSystemEnabled ?? this.defaultSystemEnabled,
       defaultSystemScope: defaultSystemScope ?? this.defaultSystemScope,
+      defaultVideoEnabled: defaultVideoEnabled ?? this.defaultVideoEnabled,
     );
   }
 
@@ -293,6 +311,7 @@ class AutoRecordSettings {
         'defaultMicEnabled': defaultMicEnabled,
         'defaultSystemEnabled': defaultSystemEnabled,
         'defaultSystemScope': _scopeToJson(defaultSystemScope),
+        'defaultVideoEnabled': defaultVideoEnabled,
       };
 
   factory AutoRecordSettings.fromJson(Map<String, dynamic> json) {
@@ -318,6 +337,7 @@ class AutoRecordSettings {
       defaultSystemEnabled: json['defaultSystemEnabled'] as bool? ?? false,
       defaultSystemScope: _scopeFromJson(json['defaultSystemScope']) ??
           SystemAudioScope.allSystem,
+      defaultVideoEnabled: json['defaultVideoEnabled'] as bool? ?? false,
     );
   }
 }

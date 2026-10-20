@@ -15,6 +15,7 @@ class NativeLiveAudioRecorder implements LiveAudioRecorder {
   NativeLiveAudioRecorder._(
     this._supportsSystemAudio,
     this._supportsProcessLoopback,
+    this._supportsVideo,
   );
 
   static const MethodChannel _channel = MethodChannel('speakr.audio/recorder');
@@ -27,6 +28,7 @@ class NativeLiveAudioRecorder implements LiveAudioRecorder {
 
   final bool _supportsSystemAudio;
   final bool _supportsProcessLoopback;
+  final bool _supportsVideo;
 
   static Future<NativeLiveAudioRecorder> probe() async {
     bool supportsSystem = false;
@@ -50,7 +52,19 @@ class NativeLiveAudioRecorder implements LiveAudioRecorder {
         supportsProcess = false;
       }
     }
-    return NativeLiveAudioRecorder._(supportsSystem, supportsProcess);
+    return NativeLiveAudioRecorder._(
+        supportsSystem, supportsProcess, await probeVideoSupport());
+  }
+
+  /// Whether the native recorder can record a window as video. Safe to
+  /// call while a recording is running.
+  static Future<bool> probeVideoSupport() async {
+    try {
+      return await _channel.invokeMethod<bool>('supportsVideo') ?? false;
+    } catch (_) {
+      // Android's recorder doesn't implement it: MissingPluginException.
+      return false;
+    }
   }
 
   @override
@@ -58,6 +72,9 @@ class NativeLiveAudioRecorder implements LiveAudioRecorder {
 
   @override
   bool get supportsProcessLoopback => _supportsProcessLoopback;
+
+  @override
+  bool get supportsVideo => _supportsVideo;
 
   @override
   bool get supportsLiveMicToggle => true;
@@ -137,7 +154,7 @@ class NativeLiveAudioRecorder implements LiveAudioRecorder {
     required String matchKey,
     required AllowlistKind kind,
   }) async {
-    if (!_supportsProcessLoopback) return const <int>[];
+    if (!_supportsProcessLoopback && !_supportsVideo) return const <int>[];
     try {
       final r = await _channel.invokeListMethod<int>(
         'findProcessPids',
@@ -156,12 +173,32 @@ class NativeLiveAudioRecorder implements LiveAudioRecorder {
   }
 
   @override
+  Future<List<CaptureWindow>> findCaptureWindows({
+    List<int> pids = const [],
+  }) async {
+    if (!_supportsVideo) return const <CaptureWindow>[];
+    try {
+      final r = await _channel.invokeListMethod<Map<Object?, Object?>>(
+        'findCaptureWindows',
+        <String, dynamic>{'pids': pids},
+      );
+      return [for (final m in r ?? const []) CaptureWindow.fromChannel(m)];
+    } on PlatformException {
+      return const <CaptureWindow>[];
+    }
+  }
+
+  @override
   Future<void> start({
     required String path,
     required bool micEnabled,
     required SystemAudioMode systemMode,
     int? processLoopbackPid,
+    int? videoHwnd,
   }) async {
+    if (videoHwnd != null && !_supportsVideo) {
+      throw UnsupportedError('Video capture is not supported on this platform.');
+    }
     if (systemMode != SystemAudioMode.off && !_supportsSystemAudio) {
       throw UnsupportedError(
           'System audio capture is not supported on this platform.');
@@ -178,6 +215,7 @@ class NativeLiveAudioRecorder implements LiveAudioRecorder {
       'systemMode': _systemModeToChannel(systemMode),
       if (processLoopbackPid != null)
         'processLoopbackPid': processLoopbackPid,
+      if (videoHwnd != null) 'videoHwnd': videoHwnd,
     });
   }
 
@@ -220,6 +258,14 @@ class NativeLiveAudioRecorder implements LiveAudioRecorder {
         if (processLoopbackPid != null)
           'processLoopbackPid': processLoopbackPid,
       },
+    );
+  }
+
+  @override
+  Future<void> setVideoTarget(int? hwnd) async {
+    await _channel.invokeMethod<void>(
+      'setVideoTarget',
+      <String, dynamic>{'hwnd': hwnd ?? 0},
     );
   }
 
