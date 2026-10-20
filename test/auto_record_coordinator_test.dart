@@ -796,12 +796,38 @@ void main() {
     });
   });
 
-  group('auto-stop on idle', () {
-    Future<void> startAutoSession({int minKeepSeconds = 0}) async {
+  group('pill stop-countdown', () {
+    late AutoRecordCoordinator pillCoord;
+    late List<int?> countdown;
+
+    setUp(() async {
+      // Swap in a coordinator wired to the pill countdown with a fast tick.
+      await coord.dispose();
+      countdown = [];
+      pillCoord = AutoRecordCoordinator(
+        micMonitor: mic,
+        outputMeter: meter,
+        recording: rec,
+        startRecording: rec.start,
+        stopAndUpload: rec.stopAndUpload,
+        cancelRecording: rec.cancel,
+        store: store,
+        onSettingsChanged: () {},
+        onStopCountdown: countdown.add,
+        stopCountdownSeconds: 3,
+        countdownTick: const Duration(milliseconds: 10),
+      );
+      pillCoord.start();
+      coord = pillCoord; // so the outer tearDown disposes it
+    });
+
+    Future<void> startWithPillOpen({
+      int minKeepSeconds = 0,
+      int elapsedSeconds = 60,
+    }) async {
       await store.write(AutoRecordSettings(
         enabled: true,
         silenceSeconds: 0,
-        autoStopOnIdle: true,
         minKeepSeconds: minKeepSeconds,
         allowlist: const [
           AllowlistEntry(
@@ -815,50 +841,89 @@ void main() {
         _u(key: 'Teams.exe', kind: AllowlistKind.exeBasename, inUse: true),
       ]);
       await Future<void>.delayed(const Duration(milliseconds: 20));
-      expect(coord.isAutoSession, isTrue);
+      rec.setState(RecordingState(
+          started: true, elapsedSeconds: elapsedSeconds, miniOpen: true));
     }
 
     Future<void> goIdle() async {
       mic.emit([
         _u(key: 'Teams.exe', kind: AllowlistKind.exeBasename, inUse: false),
       ]);
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await Future<void>.delayed(const Duration(milliseconds: 5));
       meter.ctrl.add(0.0);
-      meter.ctrl.add(0.0);
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await Future<void>.delayed(const Duration(milliseconds: 5));
     }
 
-    test('stops and saves without prompting when both go idle', () async {
-      await startAutoSession();
+    test('counts down on the pill instead of prompting, then stops',
+        () async {
+      await startWithPillOpen();
       final emitted = <StopPromptRequest>[];
-      final sub = coord.prompts.listen(emitted.add);
+      final sub = pillCoord.prompts.listen(emitted.add);
 
       await goIdle();
+      expect(pillCoord.isStopCountdownActive, isTrue);
+      expect(rec.stoppedCalled, isFalse);
 
+      await Future<void>.delayed(const Duration(milliseconds: 80));
       expect(emitted, isEmpty);
+      expect(countdown, [3, 2, 1, 0]);
       expect(rec.stoppedCalled, isTrue);
-      expect(rec.cancelCalled, isFalse);
-      expect(coord.isAutoSession, isFalse);
       await sub.cancel();
     });
 
-    test('still discards clips shorter than minKeepSeconds', () async {
-      await startAutoSession(minKeepSeconds: 10);
-      rec.setState(const RecordingState(started: true, elapsedSeconds: 3));
-
+    test('Resume cancels the stop and suppresses re-arming while idle',
+        () async {
+      await startWithPillOpen();
       await goIdle();
+      pillCoord.resumeFromStopCountdown();
+      expect(countdown.last, isNull);
 
+      meter.ctrl.add(0.0);
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      expect(pillCoord.isStopCountdownActive, isFalse);
+      expect(rec.stoppedCalled, isFalse);
+    });
+
+    test('mic re-acquired during countdown cancels it', () async {
+      await startWithPillOpen();
+      await goIdle();
+      mic.emit([
+        _u(key: 'Teams.exe', kind: AllowlistKind.exeBasename, inUse: true),
+      ]);
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      expect(countdown.last, isNull);
+      expect(rec.stoppedCalled, isFalse);
+    });
+
+    test('discards clips shorter than minKeepSeconds when it expires',
+        () async {
+      await startWithPillOpen(minKeepSeconds: 10, elapsedSeconds: 3);
+      await goIdle();
+      await Future<void>.delayed(const Duration(milliseconds: 80));
       expect(rec.cancelCalled, isTrue);
       expect(rec.stoppedCalled, isFalse);
     });
 
-    test('does not stop while the trigger app still holds the mic', () async {
-      await startAutoSession();
+    test('does not start while the trigger app still holds the mic',
+        () async {
+      await startWithPillOpen();
       meter.ctrl.add(0.0);
-      await Future<void>.delayed(const Duration(milliseconds: 20));
-
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      expect(countdown, isEmpty);
       expect(rec.stoppedCalled, isFalse);
-      expect(coord.isAutoSession, isTrue);
+    });
+
+    test('falls back to the dialog prompt when the pill is closed',
+        () async {
+      await startWithPillOpen();
+      rec.setState(const RecordingState(started: true, elapsedSeconds: 60));
+      final emitted = <StopPromptRequest>[];
+      final sub = pillCoord.prompts.listen(emitted.add);
+
+      await goIdle();
+      expect(emitted, hasLength(1));
+      expect(pillCoord.isStopCountdownActive, isFalse);
+      await sub.cancel();
     });
   });
 

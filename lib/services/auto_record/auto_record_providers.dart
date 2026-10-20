@@ -130,11 +130,6 @@ class AutoRecordSettingsController {
     await _write(s.copyWith(silenceSeconds: v.clamp(3, 120)));
   }
 
-  Future<void> setAutoStopOnIdle(bool v) async {
-    final s = await _read();
-    await _write(s.copyWith(autoStopOnIdle: v));
-  }
-
   Future<void> setMinKeepSeconds(int v) async {
     final s = await _read();
     await _write(s.copyWith(minKeepSeconds: v.clamp(0, 600)));

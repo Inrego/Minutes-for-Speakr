@@ -118,6 +118,7 @@ class RecordingMirror extends StateNotifier<RecordingState> {
   }
   Future<void> beginDrag() => _send(MiniIpc.cmdBeginDrag);
   Future<void> showMain() => _send(MiniIpc.cmdShowMain);
+  Future<void> resumeAutoStop() => _send(MiniIpc.cmdResumeAutoStop);
 }
 
 final recordingMirrorProvider =

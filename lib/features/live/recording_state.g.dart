@@ -34,6 +34,7 @@ _RecordingState _$RecordingStateFromJson(Map<String, dynamic> json) =>
       audioLevel: (json['audioLevel'] as num?)?.toDouble() ?? 0.0,
       processSourceName: json['processSourceName'] as String?,
       processSourcePid: (json['processSourcePid'] as num?)?.toInt(),
+      autoStopSecondsLeft: (json['autoStopSecondsLeft'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$RecordingStateToJson(_RecordingState instance) =>
@@ -57,6 +58,7 @@ Map<String, dynamic> _$RecordingStateToJson(_RecordingState instance) =>
       'audioLevel': instance.audioLevel,
       'processSourceName': instance.processSourceName,
       'processSourcePid': instance.processSourcePid,
+      'autoStopSecondsLeft': instance.autoStopSecondsLeft,
     };
 
 const _$SystemAudioModeEnumMap = {

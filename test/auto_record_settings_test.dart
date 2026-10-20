@@ -119,18 +119,4 @@ void main() {
       expect(restored.defaultTagIds, [42]);
     });
   });
-
-  group('autoStopOnIdle', () {
-    test('defaults to false, including for legacy JSON', () {
-      expect(const AutoRecordSettings().autoStopOnIdle, isFalse);
-      expect(AutoRecordSettings.fromJson(const {}).autoStopOnIdle, isFalse);
-    });
-
-    test('round-trips through JSON', () {
-      final restored = AutoRecordSettings.fromJson(
-        const AutoRecordSettings(autoStopOnIdle: true).toJson(),
-      );
-      expect(restored.autoStopOnIdle, isTrue);
-    });
-  });
 }

@@ -74,6 +74,7 @@ class AutoRecordBootstrap {
         stopAndUpload: recording.stopAndUpload,
         cancelRecording: recording.cancel,
         store: store,
+        onStopCountdown: recording.setAutoStopCountdown,
         onSettingsChanged: () =>
             container.invalidate(autoRecordSettingsProvider),
         applyTriggerMetadata: (
@@ -93,6 +94,7 @@ class AutoRecordBootstrap {
           recording.setFolder(folderId);
         },
       );
+      recording.onResumeAutoStop = coordinator.resumeFromStopCountdown;
       coordinator.start();
       _instance = AutoRecordBootstrap._(coordinator);
       // Re-publish via the override so consumers can watch it.

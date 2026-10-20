@@ -4,6 +4,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../services/auto_record/auto_record_coordinator.dart'
+    show kAutoStopCountdownSeconds;
 import '../../../theme/colors.dart';
 import '../../../theme/typography.dart';
 import '../../../widgets/speakr_icons.dart';
@@ -64,15 +66,21 @@ class _MiniRecorderScreenState extends ConsumerState<MiniRecorderScreen> {
       // corners visually clean during any pre-clip frame.
       backgroundColor: SpeakrColors.ink,
       body: Center(
-        child: _Pill(
-          state: state,
-          discardArmed: _discardArmed,
-          onDragStart: mirror.beginDrag,
-          onDiscard: _handleDiscardTap,
-          onTogglePause: state.started ? mirror.togglePause : null,
-          onStop: state.started && !state.uploading ? mirror.stop : null,
-          onOpenMain: mirror.showMain,
-        ),
+        child: state.autoStopSecondsLeft != null
+            ? _MeetingEndedPill(
+                secondsLeft: state.autoStopSecondsLeft!,
+                onDragStart: mirror.beginDrag,
+                onResume: mirror.resumeAutoStop,
+              )
+            : _Pill(
+                state: state,
+                discardArmed: _discardArmed,
+                onDragStart: mirror.beginDrag,
+                onDiscard: _handleDiscardTap,
+                onTogglePause: state.started ? mirror.togglePause : null,
+                onStop: state.started && !state.uploading ? mirror.stop : null,
+                onOpenMain: mirror.showMain,
+              ),
       ),
     );
   }
@@ -183,6 +191,127 @@ class _Pill extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Replaces the control pill while an idle auto-recording counts down to
+/// its automatic stop: "Meeting ended" + countdown on the left, a single
+/// Resume button on the right. A lighter fill behind the content drains
+/// right-to-left over the countdown. Sized to fit the same 248 px window.
+class _MeetingEndedPill extends StatelessWidget {
+  const _MeetingEndedPill({
+    required this.secondsLeft,
+    required this.onDragStart,
+    required this.onResume,
+  });
+
+  final int secondsLeft;
+  final Future<void> Function() onDragStart;
+  final Future<void> Function() onResume;
+
+  @override
+  Widget build(BuildContext context) {
+    // Main pushes whole seconds; animate each step to the *next* second's
+    // value over one second so the bar drains continuously, not in jumps.
+    final target =
+        (secondsLeft - 1).clamp(0, kAutoStopCountdownSeconds) /
+        kAutoStopCountdownSeconds;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        height: 36,
+        color: SpeakrColors.ink,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 1.0, end: target),
+                duration: const Duration(seconds: 1),
+                builder: (context, value, _) => FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: value,
+                  child: const ColoredBox(color: Color(0x1FFFFFFF)),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 4, 0),
+              child: _content(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _content() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _PillDrag(
+          onDragStart: onDragStart,
+          child: SizedBox(
+            width: 138,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Meeting ended',
+                  style: SpeakrText.sans(
+                    size: 12,
+                    weight: FontWeight.w600,
+                    color: SpeakrColors.bg,
+                  ),
+                ),
+                Text(
+                  secondsLeft > 0 ? 'Stopping in ${secondsLeft}s' : 'Stopping…',
+                  style:
+                      SpeakrText.mono(
+                        size: 10,
+                        color: SpeakrColors.bg.withValues(alpha: 0.6),
+                      ).copyWith(
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Material(
+          color: const Color(0x29FFFFFF), // ~16% white — primary
+          shape: const StadiumBorder(),
+          child: InkWell(
+            customBorder: const StadiumBorder(),
+            onTap: secondsLeft > 0 ? () => onResume() : null,
+            child: SizedBox(
+              height: 28,
+              width: 74,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SpeakrIconView(
+                    SpeakrIcon.play,
+                    size: 10,
+                    color: SpeakrColors.bg,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Resume',
+                    style: SpeakrText.sans(
+                      size: 12,
+                      weight: FontWeight.w600,
+                      color: SpeakrColors.bg,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
