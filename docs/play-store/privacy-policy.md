@@ -208,4 +208,4 @@ by updating the "Last updated" date above.
 
 Questions about this policy: **rss@khd.dk**
 
-Source code: https://github.com/Inrego/SpeakrApp
+Source code: https://github.com/Inrego/Minutes-for-Speakr

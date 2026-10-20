@@ -244,6 +244,6 @@ Based on the code, the app does **NOT** collect or transmit any of:
 4. ~~**Privacy policy URL**~~ — **DONE.** The policy text is final in
    `privacy-policy.md` and published as `site/privacy-policy.html` (generated;
    CI checks the two match).
-   **https://inrego.github.io/SpeakrApp/privacy-policy.html is live and returns
+   **https://inrego.github.io/Minutes-for-Speakr/privacy-policy.html is live and returns
    HTTP 200.** The Data Safety answers above were reconciled against the
    2026-09-22 policy text; re-check them if the policy changes again.

@@ -17,7 +17,7 @@ import 'dart:io';
 
 const _sourcePath = 'docs/play-store/privacy-policy.md';
 const _outputPath = 'site/privacy-policy.html';
-const _repo = 'https://github.com/Inrego/SpeakrApp';
+const _repo = 'https://github.com/Inrego/Minutes-for-Speakr';
 const _description =
     'Privacy policy for the Speakr app: no backend operated by us, no '
     'analytics, no third-party tracking. Your data goes only to the Speakr '

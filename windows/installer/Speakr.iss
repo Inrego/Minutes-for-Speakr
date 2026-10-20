@@ -17,7 +17,7 @@
 #define MyAppName "Minutes for Speakr"
 #define MyAppPublisher "Rene Scott Simonsen"
 #define MyAppExeName "speakr_app.exe"
-#define MyAppURL "https://github.com/Inrego/SpeakrApp"
+#define MyAppURL "https://github.com/Inrego/Minutes-for-Speakr"
 
 [Setup]
 ; A fixed AppId GUID kept constant across releases so upgrades work.

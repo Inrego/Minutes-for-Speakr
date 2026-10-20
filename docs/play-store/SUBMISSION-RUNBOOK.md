@@ -32,7 +32,7 @@ was the last docs pass).
 `MANAGE_EXTERNAL_STORAGE`, `READ_MEDIA_AUDIO`, `READ_EXTERNAL_STORAGE`,
 `FOREGROUND_SERVICE_DATA_SYNC` and `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` are
 **all absent** — the first was dropped in #4, the other four in the permission
-audit (#7). `https://inrego.github.io/SpeakrApp/privacy-policy.html` returns
+audit (#7). `https://inrego.github.io/Minutes-for-Speakr/privacy-policy.html` returns
 **HTTP 200**.
 
 **Both decisions this runbook used to leave open are now settled:** App access
@@ -200,7 +200,7 @@ claiming otherwise invites a layout complaint.
 | Category | **Productivity** (alternative: Business) |
 | Tags | Pick from Play's controlled list — "Productivity", "Tools". No free-form tags. |
 | Email (public, required) | `rss@khd.dk` |
-| Website (optional) | `https://github.com/Inrego/SpeakrApp` |
+| Website (optional) | `https://github.com/Inrego/Minutes-for-Speakr` |
 | Phone (optional) | leave blank |
 
 ---
@@ -416,7 +416,7 @@ the Console shows each as Not started / In progress / Completed.
 **Enter:**
 
 ```
-https://inrego.github.io/SpeakrApp/privacy-policy.html
+https://inrego.github.io/Minutes-for-Speakr/privacy-policy.html
 ```
 
 **Why:** required because the app requests microphone, phone state, and captures
@@ -1128,8 +1128,8 @@ and can be run locally on the review machine.
 
 Setup (once, ~5 minutes, on the machine running the emulator):
 1. Install the Dart SDK 3.11 or later (https://dart.dev/get-dart).
-2. git clone https://github.com/Inrego/SpeakrApp
-3. cd SpeakrApp && dart run tools/mock-server/bin/speakr_mock_server.dart
+2. git clone https://github.com/Inrego/Minutes-for-Speakr
+3. cd Minutes-for-Speakr && dart run tools/mock-server/bin/speakr_mock_server.dart
    It listens on 0.0.0.0:8420 and prints nothing further. Leave it running.
 
 In the app:
