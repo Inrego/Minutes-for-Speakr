@@ -40,7 +40,7 @@ review, settings/connection screen.
 
 | Form | Required? | Status | Notes |
 |---|---|---|---|
-| **Privacy policy URL** | **BLOCKER** | **DONE** (still to enter in Console) | Policy text is in `privacy-policy.md`; the published copy is `site/privacy-policy.html`, deployed by `.github/workflows/pages.yml`. **https://inrego.github.io/SpeakrApp/privacy-policy.html is live and returns HTTP 200.** Paste it into App content → Privacy policy (`SUBMISSION-RUNBOOK.md` §3.1). See `listing.md` and `data-safety.md`. |
+| **Privacy policy URL** | **BLOCKER** | **DONE** (still to enter in Console) | Policy text is in `privacy-policy.md`; the published copy is `site/privacy-policy.html`, deployed by `.github/workflows/pages.yml`. **https://inrego.github.io/Minutes-for-Speakr/privacy-policy.html is live and returns HTTP 200.** Paste it into App content → Privacy policy (`SUBMISSION-RUNBOOK.md` §3.1). See `listing.md` and `data-safety.md`. |
 | **Data Safety form** | **BLOCKER** | **ANSWERS SETTLED** | Paste-ready answers in `SUBMISSION-RUNBOOK.md` §4; the reasoning is in `data-safety.md`. The last open question — "is all data encrypted in transit?" — is settled **No** (2026-09-22), because cleartext HTTP to self-hosted LAN servers is deliberate. Review and submit in Console. |
 | **Content rating questionnaire** | **BLOCKER** | TODO | Complete the IARC questionnaire. Expected outcome: **Everyone** — no violence, no sexual content, no gambling. The app does let users record/upload their own audio (user-generated content) but to their own private server, not a public/social feed; answer the UGC questions accordingly (no public sharing within the app). |
 | **Target audience & content** | **BLOCKER** | TODO | Target audience: adults (18+) / general; **do NOT** mark as designed for children — the sensitive permissions and self-hosting requirement make this clearly not a kids' app. This keeps you out of the Families policy / Designed for Families program. |
@@ -197,7 +197,7 @@ once declared stays readable — **none of them needs a Console declaration.**
       Re-run the §2.2 probes on the day you submit; the endpoint is permanent,
       but its Let's Encrypt certificate expires **2026-12-13**.
 - [x] Privacy policy URL is live and reachable —
-      **https://inrego.github.io/SpeakrApp/privacy-policy.html**, HTTP 200.
+      **https://inrego.github.io/Minutes-for-Speakr/privacy-policy.html**, HTTP 200.
 - [ ] Data Safety answers match actual behavior, with **encrypted in transit =
       No** (settled 2026-09-22; see `data-safety.md` Section A).
 - [x] Decision recorded on `MANAGE_EXTERNAL_STORAGE` — **removed, migrated to
@@ -218,7 +218,7 @@ once declared stays readable — **none of them needs a Console declaration.**
 ## 6. Follow-ups requiring your input (cannot be done from the repo)
 
 1. ~~**Write & host the privacy policy**~~ **Done 2026-09-22** — live at
-   **https://inrego.github.io/SpeakrApp/privacy-policy.html** (HTTP 200).
+   **https://inrego.github.io/Minutes-for-Speakr/privacy-policy.html** (HTTP 200).
    Remaining: paste the URL into the Console.
 2. ~~**Capture screenshots** (`docs/screenshots/mobile.png` + more) and the
    **feature graphic**.~~ **Done 2026-09-22** — see §1. Screenshots were

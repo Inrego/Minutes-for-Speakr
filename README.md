@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20Windows-informational.svg)](#requirements)
-[![Latest release](https://img.shields.io/github/v/release/Inrego/SpeakrApp?sort=semver)](https://github.com/Inrego/SpeakrApp/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/Inrego/Minutes-for-Speakr?sort=semver)](https://github.com/Inrego/Minutes-for-Speakr/releases/latest)
 [![Google Play](https://img.shields.io/badge/Google%20Play-Minutes%20for%20Speakr-414141?logo=googleplay)](https://play.google.com/store/apps/details?id=com.inrego.speakr_app)
 
 An unofficial Flutter client for [Speakr](https://github.com/learnedmachine/speakr), the self-hosted audio transcription and meeting-notes server. Runs on **Android**, **iOS**, and **Windows desktop**.
@@ -39,11 +39,11 @@ More screenshots (onboarding, recording detail, live capture, settings) for both
 
 ## Download / Releases
 
-Prebuilt artifacts for tagged versions are published on the [GitHub Releases](https://github.com/Inrego/SpeakrApp/releases) page.
+Prebuilt artifacts for tagged versions are published on the [GitHub Releases](https://github.com/Inrego/Minutes-for-Speakr/releases) page.
 
 ### Android
 
-- **Direct download (free):** grab the universal `.apk` from the latest [release](https://github.com/Inrego/SpeakrApp/releases/latest) and install it (enable "install from unknown sources" if your device prompts you).
+- **Direct download (free):** grab the universal `.apk` from the latest [release](https://github.com/Inrego/Minutes-for-Speakr/releases/latest) and install it (enable "install from unknown sources" if your device prompts you).
 - **Google Play:** [Minutes for Speakr on Google Play](https://play.google.com/store/apps/details?id=com.inrego.speakr_app).
 
 The app is and will remain free on GitHub — every release ships the same APK here. If you'd like to support development, getting it through Google Play is a nice way to do so, and you get automatic updates in return.
@@ -101,8 +101,8 @@ servers commonly run on a LAN address without TLS.
 ## Getting started
 
 ```bash
-git clone https://github.com/Inrego/SpeakrApp.git
-cd SpeakrApp
+git clone https://github.com/Inrego/Minutes-for-Speakr.git
+cd Minutes-for-Speakr
 
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs

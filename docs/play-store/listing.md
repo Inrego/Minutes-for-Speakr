@@ -116,7 +116,7 @@ not produced in this project's CI.)
 
 - **Email (required, public):** rss@khd.dk
 - **Website (optional):** consider linking the GitHub repo —
-  https://github.com/Inrego/SpeakrApp
+  https://github.com/Inrego/Minutes-for-Speakr
 - **Phone (optional):** leave blank unless you want it public.
 
 ---
@@ -134,7 +134,7 @@ of any kind** (see `permissions-declaration.md` §1 and §8).
 
 The policy exists: source of truth `privacy-policy.md`, published from
 `site/privacy-policy.html` at
-**https://inrego.github.io/SpeakrApp/privacy-policy.html**. Enter that URL in
+**https://inrego.github.io/Minutes-for-Speakr/privacy-policy.html**. Enter that URL in
 **Play Console → App content → Privacy policy**.
 
 The policy states, accurately for this app:
