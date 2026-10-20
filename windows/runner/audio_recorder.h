@@ -25,6 +25,11 @@
 // Windows the recorder reports `supportsProcessLoopback = false` so
 // the UI hides the per-process option.
 //
+// When `start` is given a `videoHwnd`, the recorder also captures that
+// window (see `VideoCapture`) and writes an H.264 + AAC .mp4. A mux
+// thread then owns all sink-writer writes, and the video timeline
+// follows the audio sample clock, so pauses cut both streams alike.
+//
 // One instance is constructed by `FlutterWindow` after the engine boots
 // (see windows/runner/flutter_window.cpp) and lives for the process
 // lifetime. The method channel `speakr.audio/recorder` is the Dart-side
@@ -55,7 +60,8 @@ class SpeakrAudioRecorder {
                         std::unique_ptr<MethodResult> result);
 
   bool Start(const std::string& path, bool micEnabled, SystemMode systemMode,
-             DWORD processLoopbackPid, std::string* outError);
+             DWORD processLoopbackPid, int64_t videoHwnd,
+             std::string* outError);
   std::string Stop(std::string* out_error = nullptr);
   void DisposeRecorder();
 
@@ -107,6 +113,13 @@ class SpeakrAudioRecorder {
   std::atomic<int> sys_mode_target_{static_cast<int>(SystemMode::kOff)};
   std::atomic<DWORD> sys_pid_target_{0};
   std::atomic<bool> sys_mode_dirty_{false};
+
+  // Window captured into the video stream, swapped the same way as the
+  // system source: the channel handler stores the target and bumps the
+  // dirty flag, the worker applies it. 0 = black frames. Video is only
+  // recorded when the session started with a non-zero target.
+  std::atomic<int64_t> video_hwnd_target_{0};
+  std::atomic<bool> video_target_dirty_{false};
 
   // Pause flag — when true, the worker still pumps WASAPI buffers (so
   // hardware doesn't underrun) but writes nothing to the sink writer.

@@ -34,6 +34,10 @@ _RecordingState _$RecordingStateFromJson(Map<String, dynamic> json) =>
       audioLevel: (json['audioLevel'] as num?)?.toDouble() ?? 0.0,
       processSourceName: json['processSourceName'] as String?,
       processSourcePid: (json['processSourcePid'] as num?)?.toInt(),
+      videoSupported: json['videoSupported'] as bool? ?? false,
+      videoRecording: json['videoRecording'] as bool? ?? false,
+      videoWindowHwnd: (json['videoWindowHwnd'] as num?)?.toInt(),
+      videoWindowTitle: json['videoWindowTitle'] as String?,
       autoStopSecondsLeft: (json['autoStopSecondsLeft'] as num?)?.toInt(),
     );
 
@@ -58,6 +62,10 @@ Map<String, dynamic> _$RecordingStateToJson(_RecordingState instance) =>
       'audioLevel': instance.audioLevel,
       'processSourceName': instance.processSourceName,
       'processSourcePid': instance.processSourcePid,
+      'videoSupported': instance.videoSupported,
+      'videoRecording': instance.videoRecording,
+      'videoWindowHwnd': instance.videoWindowHwnd,
+      'videoWindowTitle': instance.videoWindowTitle,
       'autoStopSecondsLeft': instance.autoStopSecondsLeft,
     };
 

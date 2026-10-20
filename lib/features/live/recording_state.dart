@@ -40,6 +40,12 @@ sealed class RecordingState with _$RecordingState {
     @Default(0.0) double audioLevel,
     String? processSourceName,
     int? processSourcePid,
+    @Default(false) bool videoSupported,
+    // True when this session writes a video stream (.mp4). Fixed at
+    // start: a stream can't be added to a file mid-recording.
+    @Default(false) bool videoRecording,
+    int? videoWindowHwnd,
+    String? videoWindowTitle,
     // Seconds until an idle auto-recording stops; non-null while the
     // mini pill shows the "meeting ended" countdown.
     int? autoStopSecondsLeft,

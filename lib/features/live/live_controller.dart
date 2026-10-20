@@ -78,10 +78,12 @@ class RecordingController extends StateNotifier<RecordingState> {
       _recorder = r;
       _recorderProbed = true;
       if (state.systemAudioSupported != r.supportsSystemAudio ||
-          state.processLoopbackSupported != r.supportsProcessLoopback) {
+          state.processLoopbackSupported != r.supportsProcessLoopback ||
+          state.videoSupported != r.supportsVideo) {
         state = state.copyWith(
           systemAudioSupported: r.supportsSystemAudio,
           processLoopbackSupported: r.supportsProcessLoopback,
+          videoSupported: r.supportsVideo,
         );
       }
       // The fallback recorder we constructed synchronously is no longer
@@ -208,14 +210,33 @@ class RecordingController extends StateNotifier<RecordingState> {
   /// trigger process when the coordinator is the caller — they enable
   /// the 3-segment pill on the live screen and feed the native
   /// process-loopback client. Both are `null` for manual recordings.
+  ///
+  /// [videoEnabled] (default: [AutoRecordSettings.defaultVideoEnabled])
+  /// also records a window as video: the front-most window of
+  /// [videoPids], or for manual recordings of any allowlisted app.
   Future<void> start({
     bool? micEnabled,
     SystemAudioMode? systemMode,
     String? processSourceName,
     int? processSourcePid,
+    bool? videoEnabled,
+    List<int>? videoPids,
   }) async {
     if (state.started) return;
     state = state.copyWith(error: null);
+
+    AutoRecordSettings? loadedSettings;
+    Future<AutoRecordSettings> settingsOrDefault() async {
+      final cached = loadedSettings;
+      if (cached != null) return cached;
+      AutoRecordSettings settings;
+      try {
+        settings = await _ref.read(autoRecordSettingsProvider.future);
+      } catch (_) {
+        settings = const AutoRecordSettings();
+      }
+      return loadedSettings = settings;
+    }
 
     bool mic;
     SystemAudioMode sysMode;
@@ -223,12 +244,7 @@ class RecordingController extends StateNotifier<RecordingState> {
       mic = micEnabled;
       sysMode = systemMode;
     } else {
-      AutoRecordSettings settings;
-      try {
-        settings = await _ref.read(autoRecordSettingsProvider.future);
-      } catch (_) {
-        settings = const AutoRecordSettings();
-      }
+      final settings = await settingsOrDefault();
       mic = micEnabled ?? settings.defaultMicEnabled;
       if (systemMode != null) {
         sysMode = systemMode;
@@ -258,6 +274,24 @@ class RecordingController extends StateNotifier<RecordingState> {
     // back to mic on — that matches the prior plugin behavior.
     if (!mic && sysMode == SystemAudioMode.off) mic = true;
 
+    CaptureWindow? videoWindow;
+    String? videoNote;
+    final wantVideo =
+        videoEnabled ?? (await settingsOrDefault()).defaultVideoEnabled;
+    if (wantVideo && _recorder.supportsVideo) {
+      if (!await _serverKeepsVideo()) {
+        videoNote = 'Video retention is off on the Speakr server, so this '
+            'recording is audio only.';
+      } else {
+        videoWindow = await _findMeetingWindow(
+            videoPids ?? await _allowlistPids(await settingsOrDefault()));
+        if (videoWindow == null) {
+          videoNote = 'No meeting window found, so this recording is audio '
+              'only.';
+        }
+      }
+    }
+
     state = state.copyWith(
       micEnabled: mic,
       systemMode: sysMode,
@@ -265,6 +299,11 @@ class RecordingController extends StateNotifier<RecordingState> {
       processLoopbackSupported: _recorder.supportsProcessLoopback,
       processSourceName: processSourceName,
       processSourcePid: processSourcePid,
+      videoSupported: _recorder.supportsVideo,
+      videoRecording: videoWindow != null,
+      videoWindowHwnd: videoWindow?.hwnd,
+      videoWindowTitle: videoWindow?.title,
+      error: videoNote,
     );
 
     if (mic) {
@@ -294,7 +333,8 @@ class RecordingController extends StateNotifier<RecordingState> {
 
     final dir = await getTemporaryDirectory();
     final ts = DateTime.now().millisecondsSinceEpoch;
-    final path = '${dir.path}${Platform.pathSeparator}speakr_$ts.m4a';
+    final ext = videoWindow != null ? 'mp4' : 'm4a';
+    final path = '${dir.path}${Platform.pathSeparator}speakr_$ts.$ext';
     try {
       await _recorder.start(
         path: path,
@@ -303,6 +343,7 @@ class RecordingController extends StateNotifier<RecordingState> {
         processLoopbackPid: sysMode == SystemAudioMode.processOnly
             ? processSourcePid
             : null,
+        videoHwnd: videoWindow?.hwnd,
       );
       _recordingStartedAt = DateTime.now();
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -349,6 +390,58 @@ class RecordingController extends StateNotifier<RecordingState> {
         matchKey: matchKey,
         kind: kind,
       );
+
+  /// Whether the server keeps uploaded video. Unknown (offline, older
+  /// server) counts as yes: the server reduces video to audio on its
+  /// own when it doesn't keep it.
+  Future<bool> _serverKeepsVideo() async {
+    try {
+      final config = await _ref
+          .read(speakrApiProvider)
+          .getConfig()
+          .timeout(const Duration(seconds: 5));
+      return config.videoRetention;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  Future<List<int>> _allowlistPids(AutoRecordSettings settings) async {
+    final pids = <int>[];
+    for (final e in settings.allowlist) {
+      pids.addAll(
+          await _recorder.findProcessPids(matchKey: e.key, kind: e.kind));
+    }
+    return pids;
+  }
+
+  /// The front-most window of [pids]. Windows come back in Z order and
+  /// the meeting window is raised when a call starts, so this beats
+  /// guessing from titles (which are localised and vary by client).
+  Future<CaptureWindow?> _findMeetingWindow(List<int> pids) async {
+    if (pids.isEmpty) return null;
+    final windows = await _recorder.findCaptureWindows(pids: pids);
+    return windows.isEmpty ? null : windows.first;
+  }
+
+  /// Capturable windows for the live screen's window picker.
+  Future<List<CaptureWindow>> listCaptureWindows() =>
+      _recorder.findCaptureWindows();
+
+  /// Point this session's video at another window, or at none (black).
+  /// Only for sessions that started with video.
+  Future<void> selectVideoWindow(CaptureWindow? window) async {
+    if (!state.started || !state.videoRecording) return;
+    try {
+      await _recorder.setVideoTarget(window?.hwnd);
+      state = state.copyWith(
+        videoWindowHwnd: window?.hwnd,
+        videoWindowTitle: window?.title,
+      );
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to switch video window: $e');
+    }
+  }
 
   Future<void> togglePause() async {
     if (!state.started) return;
@@ -523,6 +616,9 @@ class RecordingController extends StateNotifier<RecordingState> {
         tagIds: tagIds,
         folderId: state.folderId,
         fileLastModified: stat.modified,
+        // ~0.7 GB per hour of video; the default 5 min would cut off
+        // all but short recordings on a slow uplink.
+        sendTimeout: state.videoRecording ? const Duration(hours: 2) : null,
       );
       final startedAt = _recordingStartedAt;
       if (startedAt != null) {
@@ -685,6 +781,7 @@ class RecordingController extends StateNotifier<RecordingState> {
       // at runtime and re-probing would waste a round trip.
       systemAudioSupported: state.systemAudioSupported,
       processLoopbackSupported: state.processLoopbackSupported,
+      videoSupported: state.videoSupported,
     );
   }
 

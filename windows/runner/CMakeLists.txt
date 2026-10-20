@@ -14,6 +14,7 @@ add_executable(${BINARY_NAME} WIN32
   "mini_window_native.cpp"
   "tray_icon.cpp"
   "utils.cpp"
+  "video_capture.cpp"
   "win32_window.cpp"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
   "Runner.rc"
@@ -50,6 +51,13 @@ target_link_libraries(${BINARY_NAME} PRIVATE
   "Ole32.lib"
   "Psapi.lib"
   "Kernel32.lib"
+)
+# Video capture: Windows.Graphics.Capture (WinRT ABI via runtimeobject)
+# + D3D11 for frame scaling/NV12 conversion.
+target_link_libraries(${BINARY_NAME} PRIVATE
+  "d3d11.lib"
+  "dxgi.lib"
+  "runtimeobject.lib"
 )
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 

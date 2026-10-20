@@ -24,6 +24,11 @@ abstract class LiveAudioRecorder {
   /// requests for [SystemAudioMode.processOnly] degrade to `allSystem`.
   bool get supportsProcessLoopback;
 
+  /// Whether the recorder can also capture a window into an H.264
+  /// video stream (Windows 10 1903+ via Windows.Graphics.Capture). When
+  /// true, [start] accepts a `videoHwnd` and the output must be `.mp4`.
+  bool get supportsVideo;
+
   /// Linear audio level [0.0, 1.0] of the captured mix, emitted ~20 Hz
   /// while a recording is active. Implementations should clamp samples
   /// into range and emit `0` while paused or before [start] is called.
@@ -66,15 +71,22 @@ abstract class LiveAudioRecorder {
     required AllowlistKind kind,
   });
 
+  /// Capturable top-level windows, front-most first. Restricted to
+  /// [pids] when non-empty. Empty on platforms without [supportsVideo].
+  Future<List<CaptureWindow>> findCaptureWindows({List<int> pids = const []});
+
   /// Begin a new recording. [systemMode] decides whether the system
   /// source is included and, if so, whether it's an all-system mix or
   /// scoped to a process tree (in which case [processLoopbackPid] is
   /// the target root PID). The mic flag controls the secondary source.
+  /// A non-null [videoHwnd] also records that window as video; [path]
+  /// must then end in `.mp4`.
   Future<void> start({
     required String path,
     required bool micEnabled,
     required SystemAudioMode systemMode,
     int? processLoopbackPid,
+    int? videoHwnd,
   });
 
   /// Pause/resume the encoder. While paused, no frames (silence or audio)
@@ -100,6 +112,10 @@ abstract class LiveAudioRecorder {
     int? processLoopbackPid,
   });
 
+  /// Point the video stream of a recording started with a `videoHwnd`
+  /// at another window. `null` records black frames.
+  Future<void> setVideoTarget(int? hwnd);
+
   /// Finalise the recording and return the file path, or `null` if the
   /// recording could not be saved (in which case any partial file has
   /// already been deleted by the implementation).
@@ -107,4 +123,29 @@ abstract class LiveAudioRecorder {
 
   /// Release any held resources. Idempotent.
   Future<void> dispose();
+}
+
+/// A window that can be recorded as video.
+class CaptureWindow {
+  const CaptureWindow({
+    required this.hwnd,
+    required this.pid,
+    required this.title,
+    required this.width,
+    required this.height,
+  });
+
+  factory CaptureWindow.fromChannel(Map<Object?, Object?> m) => CaptureWindow(
+        hwnd: (m['hwnd'] as num).toInt(),
+        pid: (m['pid'] as num).toInt(),
+        title: m['title'] as String? ?? '',
+        width: (m['width'] as num?)?.toInt() ?? 0,
+        height: (m['height'] as num?)?.toInt() ?? 0,
+      );
+
+  final int hwnd;
+  final int pid;
+  final String title;
+  final int width;
+  final int height;
 }

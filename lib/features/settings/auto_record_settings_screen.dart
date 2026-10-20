@@ -674,6 +674,7 @@ class _PerAppConfigSheet extends ConsumerWidget {
             defaultMicEnabled: s.defaultMicEnabled,
             defaultSystemEnabled: s.defaultSystemEnabled,
             defaultSystemScope: s.defaultSystemScope,
+            defaultVideoEnabled: s.defaultVideoEnabled,
             controller: controller,
           );
         },
@@ -700,6 +701,7 @@ class _PerAppConfigSheetBody extends ConsumerWidget {
     required this.defaultMicEnabled,
     required this.defaultSystemEnabled,
     required this.defaultSystemScope,
+    required this.defaultVideoEnabled,
     required this.controller,
   });
   final AllowlistEntry entry;
@@ -709,10 +711,13 @@ class _PerAppConfigSheetBody extends ConsumerWidget {
   final bool defaultMicEnabled;
   final bool defaultSystemEnabled;
   final SystemAudioScope defaultSystemScope;
+  final bool defaultVideoEnabled;
   final AutoRecordSettingsController controller;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final videoSupported =
+        ref.watch(videoCaptureSupportedProvider).value ?? false;
     final tagsAsync = ref.watch(tagsProvider);
     final foldersAsync = ref.watch(foldersProvider);
     final knownFolders = foldersAsync.value ?? const <Folder>[];
@@ -912,6 +917,32 @@ class _PerAppConfigSheetBody extends ConsumerWidget {
             defaultSystemScope: defaultSystemScope,
             controller: controller,
           ),
+          if (videoSupported) ...[
+            const SizedBox(height: 16),
+            // ── Video ───────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 6),
+              child: MonoEyebrow('Video', size: 9),
+            ),
+            _SheetRow(
+              label: 'Use default (${defaultVideoEnabled ? 'on' : 'off'})',
+              selected: entry.videoEnabled == null,
+              onTap: () =>
+                  controller.setEntryOverrides(entry, clearVideo: true),
+            ),
+            _SheetRow(
+              label: "Always record this app's window",
+              selected: entry.videoEnabled == true,
+              onTap: () =>
+                  controller.setEntryOverrides(entry, videoEnabled: true),
+            ),
+            _SheetRow(
+              label: 'Never record video',
+              selected: entry.videoEnabled == false,
+              onTap: () =>
+                  controller.setEntryOverrides(entry, videoEnabled: false),
+            ),
+          ],
         ],
       ),
     );

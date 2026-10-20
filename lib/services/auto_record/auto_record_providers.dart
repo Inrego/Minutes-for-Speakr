@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../audio/live_audio_recorder_factory.dart';
+import '../audio/native_live_audio_recorder.dart';
 import 'auto_record_settings.dart';
 import 'auto_record_settings_store.dart';
 import 'mic_monitor.dart';
@@ -51,6 +52,14 @@ final processLoopbackSupportedProvider = FutureProvider<bool>((ref) async {
     await recorder.dispose();
   }
 });
+
+/// Whether the recorder on this device can record a window as video
+/// (Windows 10 1903+). Settings screens hide the video options when false.
+/// Probes the channel directly instead of building a recorder: disposing
+/// a probe recorder would stop a recording that is in progress.
+final videoCaptureSupportedProvider = FutureProvider<bool>(
+  (ref) => NativeLiveAudioRecorder.probeVideoSupport(),
+);
 
 /// Imperative writer used by the settings screen. Reads through
 /// [autoRecordStoreProvider]; invalidates [autoRecordSettingsProvider]
@@ -103,6 +112,8 @@ class AutoRecordSettingsController {
     bool clearSystem = false,
     SystemAudioScope? systemScope,
     bool clearSystemScope = false,
+    bool? videoEnabled,
+    bool clearVideo = false,
   }) async {
     final s = await _read();
     final next = <AllowlistEntry>[
@@ -118,6 +129,8 @@ class AutoRecordSettingsController {
             systemScope: clearSystemScope
                 ? null
                 : (systemScope ?? e.systemScope),
+            videoEnabled:
+                clearVideo ? null : (videoEnabled ?? e.videoEnabled),
           )
         else
           e,
@@ -163,6 +176,11 @@ class AutoRecordSettingsController {
   Future<void> setDefaultSystemScope(SystemAudioScope scope) async {
     final s = await _read();
     await _write(s.copyWith(defaultSystemScope: scope));
+  }
+
+  Future<void> setDefaultVideoEnabled(bool v) async {
+    final s = await _read();
+    await _write(s.copyWith(defaultVideoEnabled: v));
   }
 
   Future<void> clearRecentlySeen() async {

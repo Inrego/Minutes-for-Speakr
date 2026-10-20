@@ -221,6 +221,11 @@ sealed class Config with _$Config {
     @JsonKey(name: 'connector_supports_initial_prompt')
     @Default(false)
     bool connectorSupportsInitialPrompt,
+    // Server keeps the video stream of uploads (VIDEO_RETENTION). When
+    // false, an uploaded .mp4 is reduced to its audio.
+    @JsonKey(name: 'video_retention') @Default(false) bool videoRetention,
+    // Upload limit for files the server stores as-is, video included.
+    @JsonKey(name: 'max_file_size_mb') int? maxFileSizeMb,
   }) = _Config;
 
   factory Config.fromJson(Map<String, dynamic> json) => _$ConfigFromJson(json);

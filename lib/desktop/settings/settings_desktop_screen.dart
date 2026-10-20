@@ -803,6 +803,27 @@ class _RecordingSection extends ConsumerWidget {
             );
           },
         ),
+        Consumer(
+          builder: (context, ref, _) {
+            final videoSupported =
+                ref.watch(videoCaptureSupportedProvider).value ?? false;
+            if (!videoSupported) return const SizedBox.shrink();
+            return _Field(
+              label: 'Record video by default',
+              hint: "Records the meeting app's window (cameras, shared "
+                  'screens) as video, about 0.7 GB per hour. Needs '
+                  'VIDEO_RETENTION on the Speakr server.',
+              child: _Toggle(
+                on: settings?.defaultVideoEnabled ?? false,
+                onTap: settings == null
+                    ? null
+                    : () => controller.setDefaultVideoEnabled(
+                        !settings.defaultVideoEnabled,
+                      ),
+              ),
+            );
+          },
+        ),
         _Field(
           label: 'Auto-summarize',
           hint: 'Generate a TL;DR after each recording completes.',

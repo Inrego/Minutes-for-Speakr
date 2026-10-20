@@ -1729,7 +1729,10 @@ as String,
 /// @nodoc
 mixin _$Config {
 
-@JsonKey(name: 'transcription_model_options') List<TranscriptionModelOption> get transcriptionModelOptions;@JsonKey(name: 'connector_supports_diarization') bool get connectorSupportsDiarization;@JsonKey(name: 'connector_supports_speaker_count') bool get connectorSupportsSpeakerCount;@JsonKey(name: 'connector_supports_hotwords') bool get connectorSupportsHotwords;@JsonKey(name: 'connector_supports_initial_prompt') bool get connectorSupportsInitialPrompt;
+@JsonKey(name: 'transcription_model_options') List<TranscriptionModelOption> get transcriptionModelOptions;@JsonKey(name: 'connector_supports_diarization') bool get connectorSupportsDiarization;@JsonKey(name: 'connector_supports_speaker_count') bool get connectorSupportsSpeakerCount;@JsonKey(name: 'connector_supports_hotwords') bool get connectorSupportsHotwords;@JsonKey(name: 'connector_supports_initial_prompt') bool get connectorSupportsInitialPrompt;// Server keeps the video stream of uploads (VIDEO_RETENTION). When
+// false, an uploaded .mp4 is reduced to its audio.
+@JsonKey(name: 'video_retention') bool get videoRetention;// Upload limit for files the server stores as-is, video included.
+@JsonKey(name: 'max_file_size_mb') int? get maxFileSizeMb;
 /// Create a copy of Config
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1742,16 +1745,16 @@ $ConfigCopyWith<Config> get copyWith => _$ConfigCopyWithImpl<Config>(this as Con
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Config&&const DeepCollectionEquality().equals(other.transcriptionModelOptions, transcriptionModelOptions)&&(identical(other.connectorSupportsDiarization, connectorSupportsDiarization) || other.connectorSupportsDiarization == connectorSupportsDiarization)&&(identical(other.connectorSupportsSpeakerCount, connectorSupportsSpeakerCount) || other.connectorSupportsSpeakerCount == connectorSupportsSpeakerCount)&&(identical(other.connectorSupportsHotwords, connectorSupportsHotwords) || other.connectorSupportsHotwords == connectorSupportsHotwords)&&(identical(other.connectorSupportsInitialPrompt, connectorSupportsInitialPrompt) || other.connectorSupportsInitialPrompt == connectorSupportsInitialPrompt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Config&&const DeepCollectionEquality().equals(other.transcriptionModelOptions, transcriptionModelOptions)&&(identical(other.connectorSupportsDiarization, connectorSupportsDiarization) || other.connectorSupportsDiarization == connectorSupportsDiarization)&&(identical(other.connectorSupportsSpeakerCount, connectorSupportsSpeakerCount) || other.connectorSupportsSpeakerCount == connectorSupportsSpeakerCount)&&(identical(other.connectorSupportsHotwords, connectorSupportsHotwords) || other.connectorSupportsHotwords == connectorSupportsHotwords)&&(identical(other.connectorSupportsInitialPrompt, connectorSupportsInitialPrompt) || other.connectorSupportsInitialPrompt == connectorSupportsInitialPrompt)&&(identical(other.videoRetention, videoRetention) || other.videoRetention == videoRetention)&&(identical(other.maxFileSizeMb, maxFileSizeMb) || other.maxFileSizeMb == maxFileSizeMb));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(transcriptionModelOptions),connectorSupportsDiarization,connectorSupportsSpeakerCount,connectorSupportsHotwords,connectorSupportsInitialPrompt);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(transcriptionModelOptions),connectorSupportsDiarization,connectorSupportsSpeakerCount,connectorSupportsHotwords,connectorSupportsInitialPrompt,videoRetention,maxFileSizeMb);
 
 @override
 String toString() {
-  return 'Config(transcriptionModelOptions: $transcriptionModelOptions, connectorSupportsDiarization: $connectorSupportsDiarization, connectorSupportsSpeakerCount: $connectorSupportsSpeakerCount, connectorSupportsHotwords: $connectorSupportsHotwords, connectorSupportsInitialPrompt: $connectorSupportsInitialPrompt)';
+  return 'Config(transcriptionModelOptions: $transcriptionModelOptions, connectorSupportsDiarization: $connectorSupportsDiarization, connectorSupportsSpeakerCount: $connectorSupportsSpeakerCount, connectorSupportsHotwords: $connectorSupportsHotwords, connectorSupportsInitialPrompt: $connectorSupportsInitialPrompt, videoRetention: $videoRetention, maxFileSizeMb: $maxFileSizeMb)';
 }
 
 
@@ -1762,7 +1765,7 @@ abstract mixin class $ConfigCopyWith<$Res>  {
   factory $ConfigCopyWith(Config value, $Res Function(Config) _then) = _$ConfigCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'transcription_model_options') List<TranscriptionModelOption> transcriptionModelOptions,@JsonKey(name: 'connector_supports_diarization') bool connectorSupportsDiarization,@JsonKey(name: 'connector_supports_speaker_count') bool connectorSupportsSpeakerCount,@JsonKey(name: 'connector_supports_hotwords') bool connectorSupportsHotwords,@JsonKey(name: 'connector_supports_initial_prompt') bool connectorSupportsInitialPrompt
+@JsonKey(name: 'transcription_model_options') List<TranscriptionModelOption> transcriptionModelOptions,@JsonKey(name: 'connector_supports_diarization') bool connectorSupportsDiarization,@JsonKey(name: 'connector_supports_speaker_count') bool connectorSupportsSpeakerCount,@JsonKey(name: 'connector_supports_hotwords') bool connectorSupportsHotwords,@JsonKey(name: 'connector_supports_initial_prompt') bool connectorSupportsInitialPrompt,@JsonKey(name: 'video_retention') bool videoRetention,@JsonKey(name: 'max_file_size_mb') int? maxFileSizeMb
 });
 
 
@@ -1779,14 +1782,16 @@ class _$ConfigCopyWithImpl<$Res>
 
 /// Create a copy of Config
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? transcriptionModelOptions = null,Object? connectorSupportsDiarization = null,Object? connectorSupportsSpeakerCount = null,Object? connectorSupportsHotwords = null,Object? connectorSupportsInitialPrompt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? transcriptionModelOptions = null,Object? connectorSupportsDiarization = null,Object? connectorSupportsSpeakerCount = null,Object? connectorSupportsHotwords = null,Object? connectorSupportsInitialPrompt = null,Object? videoRetention = null,Object? maxFileSizeMb = freezed,}) {
   return _then(_self.copyWith(
 transcriptionModelOptions: null == transcriptionModelOptions ? _self.transcriptionModelOptions : transcriptionModelOptions // ignore: cast_nullable_to_non_nullable
 as List<TranscriptionModelOption>,connectorSupportsDiarization: null == connectorSupportsDiarization ? _self.connectorSupportsDiarization : connectorSupportsDiarization // ignore: cast_nullable_to_non_nullable
 as bool,connectorSupportsSpeakerCount: null == connectorSupportsSpeakerCount ? _self.connectorSupportsSpeakerCount : connectorSupportsSpeakerCount // ignore: cast_nullable_to_non_nullable
 as bool,connectorSupportsHotwords: null == connectorSupportsHotwords ? _self.connectorSupportsHotwords : connectorSupportsHotwords // ignore: cast_nullable_to_non_nullable
 as bool,connectorSupportsInitialPrompt: null == connectorSupportsInitialPrompt ? _self.connectorSupportsInitialPrompt : connectorSupportsInitialPrompt // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,videoRetention: null == videoRetention ? _self.videoRetention : videoRetention // ignore: cast_nullable_to_non_nullable
+as bool,maxFileSizeMb: freezed == maxFileSizeMb ? _self.maxFileSizeMb : maxFileSizeMb // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -1868,10 +1873,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'transcription_model_options')  List<TranscriptionModelOption> transcriptionModelOptions, @JsonKey(name: 'connector_supports_diarization')  bool connectorSupportsDiarization, @JsonKey(name: 'connector_supports_speaker_count')  bool connectorSupportsSpeakerCount, @JsonKey(name: 'connector_supports_hotwords')  bool connectorSupportsHotwords, @JsonKey(name: 'connector_supports_initial_prompt')  bool connectorSupportsInitialPrompt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'transcription_model_options')  List<TranscriptionModelOption> transcriptionModelOptions, @JsonKey(name: 'connector_supports_diarization')  bool connectorSupportsDiarization, @JsonKey(name: 'connector_supports_speaker_count')  bool connectorSupportsSpeakerCount, @JsonKey(name: 'connector_supports_hotwords')  bool connectorSupportsHotwords, @JsonKey(name: 'connector_supports_initial_prompt')  bool connectorSupportsInitialPrompt, @JsonKey(name: 'video_retention')  bool videoRetention, @JsonKey(name: 'max_file_size_mb')  int? maxFileSizeMb)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Config() when $default != null:
-return $default(_that.transcriptionModelOptions,_that.connectorSupportsDiarization,_that.connectorSupportsSpeakerCount,_that.connectorSupportsHotwords,_that.connectorSupportsInitialPrompt);case _:
+return $default(_that.transcriptionModelOptions,_that.connectorSupportsDiarization,_that.connectorSupportsSpeakerCount,_that.connectorSupportsHotwords,_that.connectorSupportsInitialPrompt,_that.videoRetention,_that.maxFileSizeMb);case _:
   return orElse();
 
 }
@@ -1889,10 +1894,10 @@ return $default(_that.transcriptionModelOptions,_that.connectorSupportsDiarizati
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'transcription_model_options')  List<TranscriptionModelOption> transcriptionModelOptions, @JsonKey(name: 'connector_supports_diarization')  bool connectorSupportsDiarization, @JsonKey(name: 'connector_supports_speaker_count')  bool connectorSupportsSpeakerCount, @JsonKey(name: 'connector_supports_hotwords')  bool connectorSupportsHotwords, @JsonKey(name: 'connector_supports_initial_prompt')  bool connectorSupportsInitialPrompt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'transcription_model_options')  List<TranscriptionModelOption> transcriptionModelOptions, @JsonKey(name: 'connector_supports_diarization')  bool connectorSupportsDiarization, @JsonKey(name: 'connector_supports_speaker_count')  bool connectorSupportsSpeakerCount, @JsonKey(name: 'connector_supports_hotwords')  bool connectorSupportsHotwords, @JsonKey(name: 'connector_supports_initial_prompt')  bool connectorSupportsInitialPrompt, @JsonKey(name: 'video_retention')  bool videoRetention, @JsonKey(name: 'max_file_size_mb')  int? maxFileSizeMb)  $default,) {final _that = this;
 switch (_that) {
 case _Config():
-return $default(_that.transcriptionModelOptions,_that.connectorSupportsDiarization,_that.connectorSupportsSpeakerCount,_that.connectorSupportsHotwords,_that.connectorSupportsInitialPrompt);}
+return $default(_that.transcriptionModelOptions,_that.connectorSupportsDiarization,_that.connectorSupportsSpeakerCount,_that.connectorSupportsHotwords,_that.connectorSupportsInitialPrompt,_that.videoRetention,_that.maxFileSizeMb);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1906,10 +1911,10 @@ return $default(_that.transcriptionModelOptions,_that.connectorSupportsDiarizati
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'transcription_model_options')  List<TranscriptionModelOption> transcriptionModelOptions, @JsonKey(name: 'connector_supports_diarization')  bool connectorSupportsDiarization, @JsonKey(name: 'connector_supports_speaker_count')  bool connectorSupportsSpeakerCount, @JsonKey(name: 'connector_supports_hotwords')  bool connectorSupportsHotwords, @JsonKey(name: 'connector_supports_initial_prompt')  bool connectorSupportsInitialPrompt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'transcription_model_options')  List<TranscriptionModelOption> transcriptionModelOptions, @JsonKey(name: 'connector_supports_diarization')  bool connectorSupportsDiarization, @JsonKey(name: 'connector_supports_speaker_count')  bool connectorSupportsSpeakerCount, @JsonKey(name: 'connector_supports_hotwords')  bool connectorSupportsHotwords, @JsonKey(name: 'connector_supports_initial_prompt')  bool connectorSupportsInitialPrompt, @JsonKey(name: 'video_retention')  bool videoRetention, @JsonKey(name: 'max_file_size_mb')  int? maxFileSizeMb)?  $default,) {final _that = this;
 switch (_that) {
 case _Config() when $default != null:
-return $default(_that.transcriptionModelOptions,_that.connectorSupportsDiarization,_that.connectorSupportsSpeakerCount,_that.connectorSupportsHotwords,_that.connectorSupportsInitialPrompt);case _:
+return $default(_that.transcriptionModelOptions,_that.connectorSupportsDiarization,_that.connectorSupportsSpeakerCount,_that.connectorSupportsHotwords,_that.connectorSupportsInitialPrompt,_that.videoRetention,_that.maxFileSizeMb);case _:
   return null;
 
 }
@@ -1921,7 +1926,7 @@ return $default(_that.transcriptionModelOptions,_that.connectorSupportsDiarizati
 @JsonSerializable()
 
 class _Config implements Config {
-  const _Config({@JsonKey(name: 'transcription_model_options') final  List<TranscriptionModelOption> transcriptionModelOptions = const <TranscriptionModelOption>[], @JsonKey(name: 'connector_supports_diarization') this.connectorSupportsDiarization = false, @JsonKey(name: 'connector_supports_speaker_count') this.connectorSupportsSpeakerCount = false, @JsonKey(name: 'connector_supports_hotwords') this.connectorSupportsHotwords = false, @JsonKey(name: 'connector_supports_initial_prompt') this.connectorSupportsInitialPrompt = false}): _transcriptionModelOptions = transcriptionModelOptions;
+  const _Config({@JsonKey(name: 'transcription_model_options') final  List<TranscriptionModelOption> transcriptionModelOptions = const <TranscriptionModelOption>[], @JsonKey(name: 'connector_supports_diarization') this.connectorSupportsDiarization = false, @JsonKey(name: 'connector_supports_speaker_count') this.connectorSupportsSpeakerCount = false, @JsonKey(name: 'connector_supports_hotwords') this.connectorSupportsHotwords = false, @JsonKey(name: 'connector_supports_initial_prompt') this.connectorSupportsInitialPrompt = false, @JsonKey(name: 'video_retention') this.videoRetention = false, @JsonKey(name: 'max_file_size_mb') this.maxFileSizeMb}): _transcriptionModelOptions = transcriptionModelOptions;
   factory _Config.fromJson(Map<String, dynamic> json) => _$ConfigFromJson(json);
 
  final  List<TranscriptionModelOption> _transcriptionModelOptions;
@@ -1935,6 +1940,11 @@ class _Config implements Config {
 @override@JsonKey(name: 'connector_supports_speaker_count') final  bool connectorSupportsSpeakerCount;
 @override@JsonKey(name: 'connector_supports_hotwords') final  bool connectorSupportsHotwords;
 @override@JsonKey(name: 'connector_supports_initial_prompt') final  bool connectorSupportsInitialPrompt;
+// Server keeps the video stream of uploads (VIDEO_RETENTION). When
+// false, an uploaded .mp4 is reduced to its audio.
+@override@JsonKey(name: 'video_retention') final  bool videoRetention;
+// Upload limit for files the server stores as-is, video included.
+@override@JsonKey(name: 'max_file_size_mb') final  int? maxFileSizeMb;
 
 /// Create a copy of Config
 /// with the given fields replaced by the non-null parameter values.
@@ -1949,16 +1959,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Config&&const DeepCollectionEquality().equals(other._transcriptionModelOptions, _transcriptionModelOptions)&&(identical(other.connectorSupportsDiarization, connectorSupportsDiarization) || other.connectorSupportsDiarization == connectorSupportsDiarization)&&(identical(other.connectorSupportsSpeakerCount, connectorSupportsSpeakerCount) || other.connectorSupportsSpeakerCount == connectorSupportsSpeakerCount)&&(identical(other.connectorSupportsHotwords, connectorSupportsHotwords) || other.connectorSupportsHotwords == connectorSupportsHotwords)&&(identical(other.connectorSupportsInitialPrompt, connectorSupportsInitialPrompt) || other.connectorSupportsInitialPrompt == connectorSupportsInitialPrompt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Config&&const DeepCollectionEquality().equals(other._transcriptionModelOptions, _transcriptionModelOptions)&&(identical(other.connectorSupportsDiarization, connectorSupportsDiarization) || other.connectorSupportsDiarization == connectorSupportsDiarization)&&(identical(other.connectorSupportsSpeakerCount, connectorSupportsSpeakerCount) || other.connectorSupportsSpeakerCount == connectorSupportsSpeakerCount)&&(identical(other.connectorSupportsHotwords, connectorSupportsHotwords) || other.connectorSupportsHotwords == connectorSupportsHotwords)&&(identical(other.connectorSupportsInitialPrompt, connectorSupportsInitialPrompt) || other.connectorSupportsInitialPrompt == connectorSupportsInitialPrompt)&&(identical(other.videoRetention, videoRetention) || other.videoRetention == videoRetention)&&(identical(other.maxFileSizeMb, maxFileSizeMb) || other.maxFileSizeMb == maxFileSizeMb));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_transcriptionModelOptions),connectorSupportsDiarization,connectorSupportsSpeakerCount,connectorSupportsHotwords,connectorSupportsInitialPrompt);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_transcriptionModelOptions),connectorSupportsDiarization,connectorSupportsSpeakerCount,connectorSupportsHotwords,connectorSupportsInitialPrompt,videoRetention,maxFileSizeMb);
 
 @override
 String toString() {
-  return 'Config(transcriptionModelOptions: $transcriptionModelOptions, connectorSupportsDiarization: $connectorSupportsDiarization, connectorSupportsSpeakerCount: $connectorSupportsSpeakerCount, connectorSupportsHotwords: $connectorSupportsHotwords, connectorSupportsInitialPrompt: $connectorSupportsInitialPrompt)';
+  return 'Config(transcriptionModelOptions: $transcriptionModelOptions, connectorSupportsDiarization: $connectorSupportsDiarization, connectorSupportsSpeakerCount: $connectorSupportsSpeakerCount, connectorSupportsHotwords: $connectorSupportsHotwords, connectorSupportsInitialPrompt: $connectorSupportsInitialPrompt, videoRetention: $videoRetention, maxFileSizeMb: $maxFileSizeMb)';
 }
 
 
@@ -1969,7 +1979,7 @@ abstract mixin class _$ConfigCopyWith<$Res> implements $ConfigCopyWith<$Res> {
   factory _$ConfigCopyWith(_Config value, $Res Function(_Config) _then) = __$ConfigCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'transcription_model_options') List<TranscriptionModelOption> transcriptionModelOptions,@JsonKey(name: 'connector_supports_diarization') bool connectorSupportsDiarization,@JsonKey(name: 'connector_supports_speaker_count') bool connectorSupportsSpeakerCount,@JsonKey(name: 'connector_supports_hotwords') bool connectorSupportsHotwords,@JsonKey(name: 'connector_supports_initial_prompt') bool connectorSupportsInitialPrompt
+@JsonKey(name: 'transcription_model_options') List<TranscriptionModelOption> transcriptionModelOptions,@JsonKey(name: 'connector_supports_diarization') bool connectorSupportsDiarization,@JsonKey(name: 'connector_supports_speaker_count') bool connectorSupportsSpeakerCount,@JsonKey(name: 'connector_supports_hotwords') bool connectorSupportsHotwords,@JsonKey(name: 'connector_supports_initial_prompt') bool connectorSupportsInitialPrompt,@JsonKey(name: 'video_retention') bool videoRetention,@JsonKey(name: 'max_file_size_mb') int? maxFileSizeMb
 });
 
 
@@ -1986,14 +1996,16 @@ class __$ConfigCopyWithImpl<$Res>
 
 /// Create a copy of Config
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? transcriptionModelOptions = null,Object? connectorSupportsDiarization = null,Object? connectorSupportsSpeakerCount = null,Object? connectorSupportsHotwords = null,Object? connectorSupportsInitialPrompt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? transcriptionModelOptions = null,Object? connectorSupportsDiarization = null,Object? connectorSupportsSpeakerCount = null,Object? connectorSupportsHotwords = null,Object? connectorSupportsInitialPrompt = null,Object? videoRetention = null,Object? maxFileSizeMb = freezed,}) {
   return _then(_Config(
 transcriptionModelOptions: null == transcriptionModelOptions ? _self._transcriptionModelOptions : transcriptionModelOptions // ignore: cast_nullable_to_non_nullable
 as List<TranscriptionModelOption>,connectorSupportsDiarization: null == connectorSupportsDiarization ? _self.connectorSupportsDiarization : connectorSupportsDiarization // ignore: cast_nullable_to_non_nullable
 as bool,connectorSupportsSpeakerCount: null == connectorSupportsSpeakerCount ? _self.connectorSupportsSpeakerCount : connectorSupportsSpeakerCount // ignore: cast_nullable_to_non_nullable
 as bool,connectorSupportsHotwords: null == connectorSupportsHotwords ? _self.connectorSupportsHotwords : connectorSupportsHotwords // ignore: cast_nullable_to_non_nullable
 as bool,connectorSupportsInitialPrompt: null == connectorSupportsInitialPrompt ? _self.connectorSupportsInitialPrompt : connectorSupportsInitialPrompt // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,videoRetention: null == videoRetention ? _self.videoRetention : videoRetention // ignore: cast_nullable_to_non_nullable
+as bool,maxFileSizeMb: freezed == maxFileSizeMb ? _self.maxFileSizeMb : maxFileSizeMb // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

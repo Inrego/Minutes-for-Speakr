@@ -2,6 +2,7 @@
 
 #include <Audioclient.h>
 #include <Avrt.h>
+#include <codecapi.h>
 #include <Mfapi.h>
 #include <Mferror.h>
 #include <Mfidl.h>
@@ -17,10 +18,15 @@
 #include <wrl/implements.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <condition_variable>
 #include <cstdio>
 #include <cstring>
+#include <deque>
 #include <vector>
+
+#include "video_capture.h"
 
 // The process-loopback activation parameters were added in Windows SDK
 // 10.0.20348. To stay compatible with older SDKs the runner is built
@@ -501,8 +507,9 @@ std::wstring Utf8ToWide(const std::string& s) {
 std::vector<int> SpeakrAudioRecorder::FindProcessPids(
     const std::string& kind, const std::string& matchKey,
     const std::string& /*exePath*/) {
+  // Not gated on process-loopback support: video capture also uses the
+  // PIDs to find the meeting window, and works on older builds.
   std::vector<int> result;
-  if (!SupportsProcessLoopback()) return result;
   const std::wstring key = Utf8ToWide(matchKey);
   const bool packaged = (kind == "packagedPrefix");
 
@@ -575,6 +582,53 @@ void SpeakrAudioRecorder::HandleMethodCall(
     result->Success(EncodableValue(SupportsProcessLoopback()));
     return;
   }
+  if (name == "supportsVideo") {
+    result->Success(EncodableValue(VideoCapture::IsSupported()));
+    return;
+  }
+  if (name == "findCaptureWindows") {
+    std::vector<DWORD> pids;
+    if (const auto* args = std::get_if<EncodableMap>(call.arguments())) {
+      auto it = args->find(EncodableValue("pids"));
+      if (it != args->end()) {
+        if (const auto* list = std::get_if<flutter::EncodableList>(&it->second)) {
+          for (const auto& v : *list) {
+            if (const auto* p = std::get_if<int32_t>(&v)) {
+              pids.push_back(static_cast<DWORD>(*p));
+            } else if (const auto* p64 = std::get_if<int64_t>(&v)) {
+              pids.push_back(static_cast<DWORD>(*p64));
+            }
+          }
+        }
+      }
+    }
+    flutter::EncodableList out;
+    for (const auto& w : VideoCapture::FindWindows(pids)) {
+      out.push_back(EncodableValue(EncodableMap{
+          {EncodableValue("hwnd"), EncodableValue(w.hwnd)},
+          {EncodableValue("pid"), EncodableValue(static_cast<int64_t>(w.pid))},
+          {EncodableValue("title"), EncodableValue(w.title)},
+          {EncodableValue("width"), EncodableValue(w.width)},
+          {EncodableValue("height"), EncodableValue(w.height)},
+      }));
+    }
+    result->Success(EncodableValue(out));
+    return;
+  }
+  if (name == "setVideoTarget") {
+    int64_t hwnd = 0;
+    if (const auto* args = std::get_if<EncodableMap>(call.arguments())) {
+      auto it = args->find(EncodableValue("hwnd"));
+      if (it != args->end()) {
+        if (const auto* v = std::get_if<int32_t>(&it->second)) hwnd = *v;
+        else if (const auto* v64 = std::get_if<int64_t>(&it->second)) hwnd = *v64;
+      }
+    }
+    video_hwnd_target_.store(hwnd);
+    video_target_dirty_.store(true);
+    result->Success();
+    return;
+  }
   if (name == "requestSystemPermission") {
     // Windows doesn't need a per-session consent for WASAPI loopback.
     result->Success(EncodableValue(true));
@@ -627,10 +681,15 @@ void SpeakrAudioRecorder::HandleMethodCall(
     bool mic = true;
     SystemMode mode = SystemMode::kOff;
     DWORD pid = 0;
+    int64_t video_hwnd = 0;
     for (const auto& kv : *args) {
       const auto* key = std::get_if<std::string>(&kv.first);
       if (!key) continue;
-      if (*key == "path") {
+      if (*key == "videoHwnd") {
+        if (const auto* v = std::get_if<int32_t>(&kv.second)) video_hwnd = *v;
+        else if (const auto* v64 = std::get_if<int64_t>(&kv.second))
+          video_hwnd = *v64;
+      } else if (*key == "path") {
         if (const auto* v = std::get_if<std::string>(&kv.second)) path = *v;
       } else if (*key == "micEnabled") {
         if (const auto* v = std::get_if<bool>(&kv.second)) mic = *v;
@@ -649,7 +708,7 @@ void SpeakrAudioRecorder::HandleMethodCall(
       }
     }
     std::string err;
-    if (!Start(path, mic, mode, pid, &err)) {
+    if (!Start(path, mic, mode, pid, video_hwnd, &err)) {
       result->Error("start_failed", err);
       return;
     }
@@ -734,6 +793,7 @@ void SpeakrAudioRecorder::HandleMethodCall(
 bool SpeakrAudioRecorder::Start(const std::string& path, bool mic_enabled,
                                 SystemMode system_mode,
                                 DWORD process_loopback_pid,
+                                int64_t video_hwnd,
                                 std::string* out_error) {
   if (running_.load()) {
     if (out_error) *out_error = "Recorder is already running.";
@@ -748,6 +808,8 @@ bool SpeakrAudioRecorder::Start(const std::string& path, bool mic_enabled,
   sys_mode_target_.store(static_cast<int>(system_mode));
   sys_pid_target_.store(process_loopback_pid);
   sys_mode_dirty_.store(false);
+  video_hwnd_target_.store(video_hwnd);
+  video_target_dirty_.store(false);
   paused_.store(false);
   stop_requested_.store(false);
   setup_ok_.store(false);
@@ -890,15 +952,52 @@ void SpeakrAudioRecorder::RunWorker() {
   // hot-swap path can reopen `sys_src` against `eRender` without a
   // fresh CoCreateInstance round-trip.
 
-  // Configure MF sink writer for AAC m4a.
+  // Video capture, when requested. The device comes up here so a
+  // missing GPU fails Start() loudly; a window that can't be captured
+  // only blacks out the picture.
+  std::unique_ptr<VideoCapture> video;
+  if (video_hwnd_target_.load() != 0) {
+    video = std::make_unique<VideoCapture>();
+    HRESULT vhr = video->Init();
+    if (FAILED(vhr)) {
+      char hex[16];
+      snprintf(hex, sizeof(hex), "0x%08X", static_cast<unsigned>(vhr));
+      record_error(std::string("Video capture setup failed (HRESULT ") + hex +
+                   ").");
+      SafeRelease(&enumer);
+      SetEvent(setup_done_event_);
+      MFShutdown();
+      if (task) AvRevertMmThreadCharacteristics(task);
+      if (co_init) CoUninitialize();
+      return;
+    }
+    video->SetTarget(
+        reinterpret_cast<HWND>(video_hwnd_target_.load()));
+  }
+
+  // Configure MF sink writer: AAC m4a, or H.264 + AAC mp4 with video.
+  // The container follows the file extension Dart picked.
   IMFSinkWriter* writer = nullptr;
   DWORD stream_index = 0;
+  DWORD video_stream_index = 0;
   IMFMediaType* out_type = nullptr;
   IMFMediaType* in_type = nullptr;
   std::wstring wpath = Utf8ToUtf16(output_path_);
-  hr = MFCreateSinkWriterFromURL(wpath.c_str(), nullptr, nullptr, &writer);
+  IMFAttributes* writer_attrs = nullptr;
+  if (video) {
+    // Without this, WriteSample blocks whenever the encoder lags, which
+    // would stall the mux thread's audio writes behind video frames.
+    if (SUCCEEDED(MFCreateAttributes(&writer_attrs, 1))) {
+      writer_attrs->SetUINT32(MF_SINK_WRITER_DISABLE_THROTTLING, TRUE);
+    }
+  }
+  hr = MFCreateSinkWriterFromURL(wpath.c_str(), nullptr, writer_attrs,
+                                 &writer);
+  SafeRelease(&writer_attrs);
   if (FAILED(hr)) {
     record_error("MFCreateSinkWriterFromURL failed (" + output_path_ + ").");
+    video.reset();
+    SafeRelease(&enumer);
     SetEvent(setup_done_event_);
     MFShutdown();
     if (task) AvRevertMmThreadCharacteristics(task);
@@ -931,13 +1030,47 @@ void SpeakrAudioRecorder::RunWorker() {
                            kTargetBitsPerSample / 8);
     hr = writer->SetInputMediaType(stream_index, in_type, nullptr);
     if (FAILED(hr)) break;
+    if (video) {
+      SafeRelease(&out_type);
+      SafeRelease(&in_type);
+      hr = MFCreateMediaType(&out_type);
+      if (FAILED(hr)) break;
+      out_type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
+      out_type->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_H264);
+      out_type->SetUINT32(MF_MT_AVG_BITRATE, VideoCapture::kBitrate);
+      out_type->SetUINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive);
+      out_type->SetUINT32(MF_MT_MPEG2_PROFILE, eAVEncH264VProfile_Main);
+      MFSetAttributeSize(out_type, MF_MT_FRAME_SIZE, VideoCapture::kWidth,
+                         VideoCapture::kHeight);
+      MFSetAttributeRatio(out_type, MF_MT_FRAME_RATE, VideoCapture::kFps, 1);
+      MFSetAttributeRatio(out_type, MF_MT_PIXEL_ASPECT_RATIO, 1, 1);
+      hr = writer->AddStream(out_type, &video_stream_index);
+      if (FAILED(hr)) break;
+      hr = MFCreateMediaType(&in_type);
+      if (FAILED(hr)) break;
+      in_type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
+      in_type->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_NV12);
+      in_type->SetUINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive);
+      in_type->SetUINT32(MF_MT_DEFAULT_STRIDE, VideoCapture::kWidth);
+      MFSetAttributeSize(in_type, MF_MT_FRAME_SIZE, VideoCapture::kWidth,
+                         VideoCapture::kHeight);
+      MFSetAttributeRatio(in_type, MF_MT_FRAME_RATE, VideoCapture::kFps, 1);
+      MFSetAttributeRatio(in_type, MF_MT_PIXEL_ASPECT_RATIO, 1, 1);
+      hr = writer->SetInputMediaType(video_stream_index, in_type, nullptr);
+      if (FAILED(hr)) break;
+    }
     hr = writer->BeginWriting();
   } while (false);
   if (FAILED(hr)) {
-    record_error("Sink writer setup failed.");
+    char hex[16];
+    snprintf(hex, sizeof(hex), "0x%08X", static_cast<unsigned>(hr));
+    record_error(std::string("Sink writer setup failed (HRESULT ") + hex +
+                 ").");
     SafeRelease(&out_type);
     SafeRelease(&in_type);
     SafeRelease(&writer);
+    video.reset();
+    SafeRelease(&enumer);
     SetEvent(setup_done_event_);
     MFShutdown();
     if (task) AvRevertMmThreadCharacteristics(task);
@@ -951,6 +1084,7 @@ void SpeakrAudioRecorder::RunWorker() {
   if (FAILED(hr)) {
     record_error("Mic IAudioClient::Start failed.");
     SafeRelease(&writer);
+    video.reset();
     SafeRelease(&enumer);
     SetEvent(setup_done_event_);
     MFShutdown();
@@ -981,8 +1115,98 @@ void SpeakrAudioRecorder::RunWorker() {
   // source without branching.
   std::vector<float> sys_silence_pcm;
 
+  // With video, a mux thread owns every WriteSample: encoding a frame
+  // can take tens of ms, and the audio loop must keep draining WASAPI
+  // meanwhile. Audio chunks are queued; each time the audio clock
+  // passes the next frame boundary, the mux thread writes the latest
+  // window frame, so video can never drift from audio.
+  std::mutex mux_mu;
+  std::condition_variable mux_cv;
+  std::deque<IMFSample*> mux_queue;
+  bool mux_done = false;
+  std::thread mux;
+  if (video) {
+    mux = std::thread([&]() {
+      HRESULT mux_co = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+      const LONGLONG frame_hns = kHnsPerSecond / VideoCapture::kFps;
+      const DWORD frame_bytes =
+          VideoCapture::kWidth * VideoCapture::kHeight * 3 / 2;
+      LONGLONG audio_end = 0;
+      LONGLONG next_frame = 0;
+      for (;;) {
+        std::deque<IMFSample*> batch;
+        bool done;
+        {
+          std::unique_lock<std::mutex> lock(mux_mu);
+          mux_cv.wait_for(lock, std::chrono::milliseconds(50),
+                          [&] { return mux_done || !mux_queue.empty(); });
+          batch.swap(mux_queue);
+          done = mux_done;
+        }
+        HRESULT mhr = S_OK;
+        for (IMFSample* s : batch) {
+          if (SUCCEEDED(mhr)) {
+            mhr = writer->WriteSample(stream_index, s);
+            LONGLONG t = 0, d = 0;
+            s->GetSampleTime(&t);
+            s->GetSampleDuration(&d);
+            audio_end = t + d;
+          }
+          s->Release();
+        }
+        while (SUCCEEDED(mhr) && next_frame + frame_hns <= audio_end) {
+          IMFMediaBuffer* vbuf = nullptr;
+          mhr = MFCreateMemoryBuffer(frame_bytes, &vbuf);
+          if (FAILED(mhr)) break;
+          BYTE* dst = nullptr;
+          vbuf->Lock(&dst, nullptr, nullptr);
+          video->ReadLatestFrame(dst);
+          vbuf->Unlock();
+          vbuf->SetCurrentLength(frame_bytes);
+          IMFSample* vs = nullptr;
+          mhr = MFCreateSample(&vs);
+          if (SUCCEEDED(mhr)) {
+            vs->AddBuffer(vbuf);
+            vs->SetSampleTime(next_frame);
+            vs->SetSampleDuration(frame_hns);
+            mhr = writer->WriteSample(video_stream_index, vs);
+          }
+          SafeRelease(&vs);
+          SafeRelease(&vbuf);
+          next_frame += frame_hns;
+        }
+        if (FAILED(mhr)) {
+          char hex[16];
+          snprintf(hex, sizeof(hex), "0x%08X", static_cast<unsigned>(mhr));
+          record_error(std::string("Video mux write failed (HRESULT ") + hex +
+                       ").");
+          // Drop whatever is still queued; the worker stops on the error.
+          std::lock_guard<std::mutex> lock(mux_mu);
+          for (IMFSample* s : mux_queue) s->Release();
+          mux_queue.clear();
+          break;
+        }
+        if (done) break;
+      }
+      if (SUCCEEDED(mux_co)) CoUninitialize();
+    });
+  }
+  auto write_audio = [&](IMFSample* sample) -> HRESULT {
+    if (!video) return writer->WriteSample(stream_index, sample);
+    sample->AddRef();
+    {
+      std::lock_guard<std::mutex> lock(mux_mu);
+      mux_queue.push_back(sample);
+    }
+    mux_cv.notify_one();
+    return S_OK;
+  };
+
   // Loop until stop_requested.
   while (!stop_requested_.load()) {
+    if (video && video_target_dirty_.exchange(false)) {
+      video->SetTarget(reinterpret_cast<HWND>(video_hwnd_target_.load()));
+    }
     // Hot-swap the loopback source if the channel handler bumped
     // sys_mode_dirty_. Runs on the worker thread (not the channel
     // thread) so it doesn't race with `sys_src->Drain()` below.
@@ -1124,7 +1348,7 @@ void SpeakrAudioRecorder::RunWorker() {
           static_cast<LONGLONG>(kChunkFrames) * kHnsPerSecond /
           kTargetSampleRate;
       sample->SetSampleDuration(duration_hns);
-      hr = writer->WriteSample(stream_index, sample);
+      hr = write_audio(sample);
       SafeRelease(&sample);
       SafeRelease(&buf);
       if (FAILED(hr)) {
@@ -1140,9 +1364,19 @@ void SpeakrAudioRecorder::RunWorker() {
     }
   }
 
+  if (mux.joinable()) {
+    {
+      std::lock_guard<std::mutex> lock(mux_mu);
+      mux_done = true;
+    }
+    mux_cv.notify_one();
+    mux.join();
+  }
+
   // Finalise sink writer and clean up.
   HRESULT fin = writer->Finalize();
   SafeRelease(&writer);
+  video.reset();
   if (FAILED(fin)) {
     char hex[16];
     snprintf(hex, sizeof(hex), "0x%08X", static_cast<unsigned>(fin));

@@ -67,11 +67,15 @@ class AutoRecordCoordinator {
   /// [processSourceName] / [processSourcePid] identify the trigger app
   /// so the live screen can render its name as the third pill segment
   /// and the native recorder can target it with process-loopback capture.
+  /// [videoEnabled] / [videoPids] ask for the trigger app's window to be
+  /// recorded as video.
   final Future<void> Function({
     bool? micEnabled,
     SystemAudioMode? systemMode,
     String? processSourceName,
     int? processSourcePid,
+    bool? videoEnabled,
+    List<int>? videoPids,
   }) startRecording;
   final Future<void> Function() stopAndUpload;
   final Future<void> Function() cancelRecording;
@@ -455,26 +459,31 @@ class AutoRecordCoordinator {
     final systemOn =
         entry.systemEnabled ?? preStartSettings.defaultSystemEnabled;
     final scope = entry.systemScope ?? preStartSettings.defaultSystemScope;
+    final videoOn =
+        entry.videoEnabled ?? preStartSettings.defaultVideoEnabled;
+
+    // Resolve the trigger process PIDs when system audio is on — even
+    // when the configured scope is allSystem. The PID doesn't affect the
+    // initial mode, but storing it in state lets the user promote to
+    // processOnly mid-session via the third pill. Without this,
+    // allSystem auto-records of a Teams call show the trigger name but
+    // no per-app option. Video needs every PID: the meeting window can
+    // belong to any process of the app, not just the first.
+    var pids = const <int>[];
+    if ((systemOn || videoOn) && findProcessPids != null) {
+      pids = await findProcessPids!(
+        exePath: user.exePath,
+        matchKey: user.key,
+        kind: user.kind,
+      );
+    }
 
     SystemAudioMode systemMode;
     int? processPid;
     if (!systemOn) {
       systemMode = SystemAudioMode.off;
     } else {
-      // Always try to resolve the trigger process PID when system audio
-      // is on — even when the configured scope is allSystem. The PID
-      // doesn't affect the initial mode, but storing it in state lets
-      // the user promote to processOnly mid-session via the third pill.
-      // Without this, allSystem auto-records of a Teams call show the
-      // trigger name but no per-app option.
-      if (findProcessPids != null) {
-        final pids = await findProcessPids!(
-          exePath: user.exePath,
-          matchKey: user.key,
-          kind: user.kind,
-        );
-        if (pids.isNotEmpty) processPid = pids.first;
-      }
+      if (pids.isNotEmpty) processPid = pids.first;
       if (scope == SystemAudioScope.processOnly && processPid != null) {
         systemMode = SystemAudioMode.processOnly;
       } else {
@@ -493,6 +502,8 @@ class AutoRecordCoordinator {
       systemMode: systemMode,
       processSourceName: entry.displayName,
       processSourcePid: processPid,
+      videoEnabled: videoOn,
+      videoPids: pids,
     );
     if (!_recordingState.started) {
       // Permission denied or another error — bail.
